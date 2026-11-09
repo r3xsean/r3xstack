@@ -2,7 +2,7 @@
 
 A capture is for a reviewer who gives it a few seconds. Plan it backwards from the result, the one moment they must see.
 
-- **Medium.** When nothing moves (a badge, a label, a count), a paired before/after screenshot of that region, cropped with enough context to recognise the control, at native resolution, taken once the result has rendered. A recording only when the interaction or the transition is the point. Offer what explains the change, not everything you made.
+- **Medium.** Lead with what reads at a glance. When the result is a state (a badge, a label, a count), a paired before/after screenshot of that region, cropped with enough context to recognise the control, at native resolution, taken once the result has rendered; under it, the before/after recording when a user's action leads to that state, since it shows how they get there. A recording alone when the interaction or the transition is the result. Offer what explains the change, not everything you made.
 - **Matched.** Before and after use the same fixtures, framing and script, with only the code under test different, and neutral labels ("Before · <base>", "After · this change"). Prefer one sequential Before → After video with a title card per half to two players; side by side only when the UI is large enough to stay legible at half width.
 - **Setup off camera.** Whatever both versions show identically is setup: start just before the action where they diverge.
 - **Short.** Aim for about 15 s per clip for a single interaction. Over ~20 s needs a reason; a second scene often works better as its own clip.
