@@ -10,7 +10,7 @@ Check the destination's commits since your base and open work on the same behavi
 
 For a bug, once it reproduces, decide whether the state that causes it is legitimate: handle a legitimate state where it enters the system, and fix whatever produces an illegitimate one.
 
-Weigh what the change costs, its code, tests, harness, review and upkeep, against who hits the problem, how often, and the harm when they do. Judge verify coverage by whether the flow will be checked again, not by this change's reach. Choose the smallest approach that settles it, and when even that costs more than the problem does, recommend a smaller version or no change in the explainer; the user decides.
+Weigh what the change costs, its code, tests, harness, review and upkeep, against who hits the problem, how often, and the harm when they do. Verify coverage is the exception: judge it by whether the flow will be checked again, not by this change's reach. Choose the smallest approach that settles it, and when even that costs more than the problem does, recommend a smaller version or no change in the explainer; the user decides.
 
 ## The structural question
 
