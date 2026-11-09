@@ -11,7 +11,7 @@ Record each reaction first (SKILL.md). Then pick the smallest response that reso
   3. After the user picks, keep the pick and delete the other variants.
 
   Offer variants instead of a round of questions.
-- **A structural or behavioural change** (a new layout, a new component, data flow): delegate it to an agent with the user's words quoted, the relevant decisions and craft.md. Review the change with the code-loop skill when it changes code beyond styling and the user has named a model for it.
+- **A structural or behavioural change** (a new layout, a new component, data flow): make it, keeping to the relevant decisions and craft.md. Review the change with the code-loop skill when it changes code beyond styling and the user has named a model for it.
 
 When a change would contradict a recorded decision, ask before making it.
 

@@ -37,7 +37,7 @@ Enter at the phase the request names; a narrow tweak enters at refine.
 | Council | [references/council.md](references/council.md) |
 | Using another design skill | [references/integrations.md](references/integrations.md), before invoking it |
 
-**Council members.** When the run will reach the council, ask the user at the start who sits on it (each member's model and reasoning effort), unless they already named them. Suggest members from different providers: a second member from the same provider mostly repeats the first. Record the members in `run.md` and use exactly those for the whole run. If a member is unavailable, say so; never substitute one.
+**Council members.** When the run will reach the council, ask the user at the start who sits on it (each member's model and reasoning effort), unless they already named them. Suggest members from different providers. Record the members in `run.md` and use exactly those for the whole run. If a member is unavailable, say so; never substitute one.
 
 **Approve a reference.** Only the user's words approve a screen; scores never stand in. Copy its captures to `docs/design/references/` and list them under Reference screens in DESIGN.md, saying what each is the reference for.
 

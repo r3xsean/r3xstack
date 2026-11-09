@@ -7,6 +7,8 @@ Take a code change from the user's request to where it should end up, with anoth
 
 The other model is the newest model, in `orchestrator_capabilities`, of the family the user named, at the effort they named. The same model and effort run every back-and-forth, code loop and review below. If the family or effort is missing, ask for it and do nothing else until they answer.
 
+A runner argues the approach in step 3, not you (the `back-and-forth` skill's runner). Unless the user names others: a Fable agent at medium debating the other model, and for a key decision a Fable agent at high debating Astra at high. A key decision is one where a trigger in design.md's structural question fires and you can state a question whose answer could change the approach. When a runner's or its partner's model is unavailable, say so and argue the approach yourself with the other model.
+
 ## 1. Destination and rules
 
 Work out where the change ends: a tested local change, a pushed branch, an open PR, merged, or deployed. Ask only when it's unclear and the answer changes the work. Saying "see it through" approves no push, PR or deploy; the ship message's approval does.
@@ -34,7 +36,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, go back and forth with the model on the approach (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, go back and forth with the model on the approach (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path outside the repo for its record; in the Question, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test that will cover it or the limitation you accept.
 
@@ -47,7 +49,7 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 - **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, each with why it lost.
 - **What a reviewer may ask:** each likely question, with its answer.
 
-Then stop: build nothing until the user approves. A plain approval in any wording lets you build. Anything else goes word for word to the model as a further exchange of the same back-and-forth, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
+Then stop: build nothing until the user approves. A plain approval in any wording lets you build. Anything else goes word for word into the same back-and-forth as a further exchange, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
 
 The approval covers the explainer as written. When a test, a demo or a review changes what the user gets, its visible behaviour, compatibility, scope, the action you'll take to ship it, or a tradeoff the explainer accepted, quote the sentence it falsifies, work it out with the model, send a revised explainer that says what changed, and stop again. Smaller discoveries, such as using a different internal helper, go in the ship message's "what changed since".
 
@@ -55,7 +57,7 @@ The approval covers the explainer as written. When a test, a demo or a review ch
 
 Before changing behaviour, keep the reproduction and every acceptance check that can run before the change exists: commit the ones the explainer ships, and save the rest, or all of them when nothing will be committed, as a patch outside the repo. Together they are the acceptance baseline, and all of it runs again on the final candidate: any later edit to it goes to the code loop and the ship message with its diff and whether it changes the promised behaviour.
 
-Build the approved approach, in the order design.md sets. When the change alters a flow the verify skill covers, update that flow in the same change. Show the reproduction from step 2 passing, through the verify skill and in the running product when the user can see it. Then simplify the diff as [simplify.md](simplify.md) says. Then run a code loop with the model on the full diff (the `code-loop` skill), giving it the user's request, or the brief that stands for it, as the Request, the explainer as the Approach, the acceptance baseline as the Acceptance, and the tier.
+Build the approved approach, in the order design.md sets. When the change alters a flow the verify skill covers, update that flow in the same change. Show the reproduction from step 2 passing, through the verify skill and in the running product when the user can see it. Then simplify the diff as [simplify.md](simplify.md) says. Then run a code loop with the model on the full diff (the `code-loop` skill), giving it the user's request, or the brief that stands for it, as the Request, the explainer as the Approach, with the runner's record when there is one, the acceptance baseline as the Acceptance, and the tier.
 
 On the final candidate, when a user can see or do what changed, capture it through the verify flow, extending the flow with `make-verifiable` when it can't, and for a bug capture the same scenario on the base through the same flow, so the before and after match. Choose, make and review the capture as [capture.md](capture.md) says, and check it shows what you'll say it shows. A capture shows the change and the checks prove it, so a capture of the base or of a failed run never stands as a pass. A change with nothing to see gets no capture.
 

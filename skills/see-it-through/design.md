@@ -28,11 +28,7 @@ Weigh the smallest patch against a structural option in the back-and-forth when 
 
 Compare them on what callers must do, who owns what, compatibility, how each is verified, and migration cost. The structural option doesn't win for looking cleaner.
 
-## Shape
-
-- A new API starts from its callers: sketch representative calls, failure behaviour, ownership and, where it applies, cancellation, before signatures.
-- Use types to make an invalid state unrepresentable or to parse data once where it enters, when that removes repeated checks; not types that need casts to get around.
-- When the design sets a boundary later changes must respect, enforce it with types, module exports or an import rule where the repo allows, and write the reason for a non-obvious ownership decision in the repo's AGENTS.md.
+When the design sets a boundary later changes must respect, enforce it with types, module exports or an import rule where the repo allows, and write the reason for a non-obvious ownership decision in the repo's AGENTS.md.
 
 ## Order
 

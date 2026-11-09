@@ -7,6 +7,8 @@ Turn something the user found, such as a post, a video or an article, into a dec
 
 The other model is the newest model, in `orchestrator_capabilities`, of the family the user named, at the effort they named. If the family or effort is missing, ask for it and do nothing else until they answer.
 
+When the source announces a model the user could run, run the `model-audit` skill on it with the same model in place of the steps below; its log entry stands for this one.
+
 ## 1. The source
 
 Read what the user gave: a post as given, with its images or the user's description of them; a video through the `transcribe-youtube` skill; an article, fetched. Read an X link yourself in a background T3 browser tab (`preview_open` with `open: false`; a visible tab's reads time out), read-only: the post, its thread and replies on that page, and its images, downloaded and viewed. Close the tab when done. Note the author, and the date and link where the source has them. Research the wider discussion, such as replies and quote posts on X, only when the user asks. When part of the source can't be read, ask for it; don't reconstruct it.
