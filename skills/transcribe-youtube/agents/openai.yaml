@@ -1,0 +1,4 @@
+interface:
+  display_name: "YouTube Transcriber"
+  short_description: "Fast, timestamped YouTube transcripts"
+  default_prompt: "Use $transcribe-youtube to transcribe this YouTube video: <URL>."

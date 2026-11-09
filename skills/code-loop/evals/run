@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""Replay code-loop's current briefs against past cases and record what they catch.
+
+  run prepare --model M --effort E [--cases ID,...] [--roles reviewer,breaker] [--skill FILE] [--out DIR]
+      Builds one isolated checkout per case (only the candidate's history: no later fix is
+      reachable) and writes each role's brief from code-loop/SKILL.md as it is now, plus a
+      judge sheet the reviewer never sees. Prints what to start.
+  run report DIR
+      Checks every judgement, writes DIR/results.md, appends to results.jsonl and prints
+      what changed since the last run of each case.
+  run clean DIR
+      Removes the checkouts.
+"""
+import argparse, datetime, hashlib, json, os, re, shutil, subprocess, sys, tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SKILL = HERE.parent / "SKILL.md"  # --skill replaces it, e.g. with the pre-edit text
+CASES = HERE / "cases"
+HISTORY = HERE / "results.jsonl"
+EXPECT_VERDICTS = {"caught", "weak", "missed"}
+NOISE_VERDICTS = {"quiet", "raised"}
+
+
+def die(msg):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def git(*args, cwd=None, check=True):
+    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    if check and r.returncode:
+        die(f"git {' '.join(args)}: {r.stderr.strip()}")
+    return r.stdout.strip()
+
+
+def load_cases(ids):
+    cases = {}
+    for f in sorted(CASES.glob("*.json")):
+        c = json.loads(f.read_text())
+        if c["id"] != f.stem:
+            die(f"{f.name}: id {c['id']!r} doesn't match the file name")
+        cases[c["id"]] = c
+    if ids:
+        missing = [i for i in ids if i not in cases]
+        if missing:
+            die(f"no such case: {', '.join(missing)}")
+        cases = {i: cases[i] for i in ids}
+    return cases
+
+
+def briefs_from_skill(skill):
+    """The three fenced blocks code-loop sends: header, reviewer, breaker."""
+    text = skill.read_text()
+    blocks = {}
+    for key, intro in (("header", "Both briefs open with this header:"),
+                       ("reviewer", "Reviewer brief, after the header:"),
+                       ("breaker", "Breaker brief, after the header:")):
+        m = re.search(re.escape(intro) + r"\s*\n```\n(.*?)\n```", text, re.S)
+        if not m:
+            die(f"code-loop/SKILL.md no longer has the block after {intro!r}; update the runner")
+        blocks[key] = m.group(1)
+    return blocks
+
+
+HEADER_KEYS = ["Repo", "Standards", "Setup", "Checks", "Request", "Approach", "Acceptance", "Diff", "Conditions"]
+
+
+def fill_header(header, case, repo, request):
+    lines = header.split("\n")
+    keys = [l.split(":", 1)[0] for l in lines]
+    if keys != HEADER_KEYS:
+        die(f"code-loop's header keys changed to {keys}; update fill_header in the runner")
+    out = []
+    for key, line in zip(keys, lines):
+        if key == "Repo":
+            line = f"Repo: {repo}  Base: {case['base']}  Out of scope: {case['out_of_scope']}"
+        elif key == "Standards":
+            line = f"Standards: {case['standards']}"
+        elif key == "Setup":
+            line = f"Setup: {case['setup']}"
+        elif key == "Checks":
+            line = "Checks: not run for this replay  Running now: none"
+        elif key == "Request":
+            line = f"Request: {request}"
+        elif key == "Approach":
+            line = "Approach: none."
+        elif key == "Acceptance":
+            line = "Acceptance: none"
+        elif key == "Diff":
+            line = line.replace("<base>", case["base"])
+        out.append(line)
+    filled = "\n".join(out)
+    left = re.findall(r"<[a-z][^>]*>", filled)
+    if left:
+        die(f"unfilled placeholders in the header: {left}")
+    return filled
+
+
+def isolated_checkout(src_repo, sha, dest):
+    """A clone whose refs reach only `sha` and its ancestors. It borrows objects from src_repo,
+    so a later fix is out of reach by refs and history, not absent from the object store."""
+    dest.mkdir(parents=True)
+    git("init", "-q", cwd=dest)
+    objects = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=src_repo)) / "objects"
+    (dest / ".git/objects/info/alternates").write_text(f"{objects}\n")
+    git("fetch", "-q", str(src_repo), sha, cwd=dest)
+    git("checkout", "-q", "--detach", sha, cwd=dest)
+    git("update-ref", "-d", "FETCH_HEAD", cwd=dest, check=False)
+
+
+def cmd_prepare(a):
+    cases = load_cases(a.cases.split(",") if a.cases else [])
+    if not cases:
+        die(f"no cases in {CASES}: add one (see README.md) before running the suite")
+    skill = Path(a.skill).resolve() if a.skill else SKILL
+    blocks = briefs_from_skill(skill)
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = Path(a.out or Path(tempfile.gettempdir()) / "code-loop-evals" / stamp).resolve()
+    if out.exists() and any(out.iterdir()):
+        die(f"{out} is not empty")
+    out.mkdir(parents=True, exist_ok=True)
+    agents = HERE.parents[2]
+    manifest = {
+        "date": datetime.datetime.now().isoformat(timespec="seconds"),
+        "model": a.model, "effort": a.effort,
+        "skill": str(skill),
+        "skill_sha256": hashlib.sha256(skill.read_bytes()).hexdigest()[:16],
+        "agents_rev": git("rev-parse", "--short", "HEAD", cwd=agents, check=False),
+        "agents_dirty": bool(git("status", "--porcelain", "--", "skills/code-loop/SKILL.md", cwd=agents, check=False)),
+        "runs": [],
+    }
+    for cid, c in cases.items():
+        repo = Path(os.path.expanduser(c["repo"]))
+        for sha in (c["base"], c["candidate"]):
+            if subprocess.run(["git", "cat-file", "-e", f"{sha}^{{commit}}"], cwd=repo).returncode:
+                git("fetch", "-q", c["remote"], sha, cwd=repo)
+        src = Path(os.path.expanduser(c["request"])).resolve()
+        if not src.is_file():
+            die(f"{cid}: request {src} not found")
+        # A copy, so the reviewer isn't pointed into a folder that holds the later fixes.
+        request = out / "work" / cid / "request.md"
+        (out / "work" / cid).mkdir(parents=True)
+        shutil.copyfile(src, request)
+        review_dir = out / "work" / cid / "repo"
+        isolated_checkout(repo, c["candidate"], review_dir)
+        header = fill_header(blocks["header"], c, review_dir, request)
+        roles = [x for x in c["roles"] if not a.roles or x in a.roles.split(",")]
+        for role in roles:
+            body = blocks[role]
+            if role == "breaker":
+                own = out / "work" / cid / "breaker"
+                isolated_checkout(repo, c["candidate"], own)
+                keep = out / "work" / cid / "breaker-keep.patch"
+                body = (f"Your own checkout is {own}: start every command there.\n"
+                        + body.replace("<repo>", str(review_dir)).replace("<keep path>", str(keep)))
+                if c.get("breaker_extra"):
+                    body += "\n" + c["breaker_extra"]
+            brief = out / f"{cid}.{role}.brief.md"
+            brief.write_text(f"{header}\n\n{body}\n")
+            items = [e for e in c["expect"] if role in e.get("roles", ["reviewer"])]
+            noise = c.get("noise", []) if role == "reviewer" else []
+            judge = out / f"{cid}.{role}.judge.md"
+            judge.write_text(
+                f"# Judge {cid} ({role})\n\nReply: {out / f'{cid}.{role}.reply.md'}\n"
+                f"Write: {out / f'{cid}.{role}.judgement.json'}\n\n"
+                + "".join(f"- {e['id']} expect: {e['claim']} ({e['where']})\n" for e in items)
+                + "".join(f"- {n['id']} noise: {n['claim']} ({n['where']}). {n['why']}\n" for n in noise))
+            manifest["runs"].append({"case": cid, "role": role, "brief": str(brief),
+                                     "expect": [e["id"] for e in items], "noise": [n["id"] for n in noise]})
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    print(f"Prepared {len(manifest['runs'])} runs in {out}")
+    print(f"Start each as a fresh delegate_task (model {a.model}, effort {a.effort}), task = the brief's text:")
+    for r in manifest["runs"]:
+        print(f"  {r['brief']}")
+    print(f"Save each final reply beside its brief as <case>.<role>.reply.md, judge it with <case>.<role>.judge.md, then: run report {out}")
+
+
+def cmd_report(a):
+    out = Path(a.dir).resolve()
+    manifest = json.loads((out / "manifest.json").read_text())
+    rows, problems = [], []
+    for r in manifest["runs"]:
+        base = out / f"{r['case']}.{r['role']}"
+        if not Path(f"{base}.reply.md").is_file():
+            problems.append(f"{base}.reply.md missing")
+            continue
+        try:
+            j = json.loads(Path(f"{base}.judgement.json").read_text())
+        except (OSError, ValueError) as e:
+            problems.append(f"{base}.judgement.json: {e}")
+            continue
+        verdicts = j.get("items", {})
+        for i in r["expect"]:
+            if verdicts.get(i) not in EXPECT_VERDICTS:
+                problems.append(f"{r['case']}.{r['role']} {i}: {verdicts.get(i)!r} is not one of {sorted(EXPECT_VERDICTS)}")
+        for i in r["noise"]:
+            if verdicts.get(i) not in NOISE_VERDICTS:
+                problems.append(f"{r['case']}.{r['role']} {i}: {verdicts.get(i)!r} is not one of {sorted(NOISE_VERDICTS)}")
+        if not isinstance(j.get("other_should"), int):
+            problems.append(f"{r['case']}.{r['role']}: other_should must be a count")
+        rows.append({"case": r["case"], "role": r["role"], "items": verdicts,
+                     "other_should": j.get("other_should"), "notes": j.get("notes", "")})
+    if problems:
+        die("cannot report yet:\n  " + "\n  ".join(problems))
+    previous = {}
+    if HISTORY.exists():
+        for line in HISTORY.read_text().splitlines():
+            rec = json.loads(line)
+            for row in rec["rows"]:
+                previous[(row["case"], row["role"])] = (rec, row)
+    record = {k: manifest[k] for k in ("date", "model", "effort", "skill_sha256", "agents_rev", "agents_dirty")}
+    record["rows"] = rows
+    lines = [f"# code-loop suite, {record['date']}",
+             f"Model {record['model']} ({record['effort']}), SKILL.md {record['skill_sha256']}, ~/.agents {record['agents_rev']}"
+             + (" (SKILL.md uncommitted)" if record["agents_dirty"] else ""), "",
+             "| case | role | item | verdict | last run |", "| --- | --- | --- | --- | --- |"]
+    changes = []
+    for row in rows:
+        prev = previous.get((row["case"], row["role"]))
+        for i, v in row["items"].items():
+            was = prev[1]["items"].get(i, "-") if prev else "-"
+            lines.append(f"| {row['case']} | {row['role']} | {i} | {v} | {was} |")
+            if prev and was != v:
+                changes.append(f"{row['case']}.{row['role']} {i}: {was} -> {v}")
+        lines.append(f"| {row['case']} | {row['role']} | other should+ | {row['other_should']} | "
+                     f"{prev[1]['other_should'] if prev else '-'} |")
+    (out / "results.md").write_text("\n".join(lines) + "\n")
+    with HISTORY.open("a") as f:
+        f.write(json.dumps(record) + "\n")
+    print("\n".join(lines))
+    print("\nChanged since last run: " + ("; ".join(changes) if changes else "nothing" if previous else "no earlier run"))
+
+
+def cmd_clean(a):
+    out = Path(a.dir).resolve()
+    manifest = json.loads((out / "manifest.json").read_text())
+    shutil.rmtree(out / "work", ignore_errors=True)
+    print(f"Removed checkouts under {out}; briefs, replies and results kept")
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = p.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("prepare")
+    s.add_argument("--model", required=True)
+    s.add_argument("--effort", required=True)
+    s.add_argument("--cases")
+    s.add_argument("--roles", help="only these roles, e.g. reviewer when the edit leaves the breaker brief alone")
+    s.add_argument("--skill", help="brief source instead of code-loop/SKILL.md, e.g. the text before an edit")
+    s.add_argument("--out")
+    s.set_defaults(fn=cmd_prepare)
+    for name, fn in (("report", cmd_report), ("clean", cmd_clean)):
+        s = sub.add_parser(name)
+        s.add_argument("dir")
+        s.set_defaults(fn=fn)
+    a = p.parse_args()
+    a.fn(a)
+
+
+if __name__ == "__main__":
+    main()
