@@ -34,7 +34,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, go back and forth with the model on the approach (the `back-and-forth` skill); in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, go back and forth with the model on the approach (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test that will cover it or the limitation you accept.
 
@@ -43,7 +43,7 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 - **The problem:** what a user sees today, who hits it and how often (observed or estimated; no reports means unknown, not rare), why it matters, and your reproduction, with its capture when it has one; for a feature, what's missing today. When the user asked for the change, open with their words.
 - **Why it happens:** the cause, in plain terms; for a feature, what stands in the way today. Leave this heading out for a feature when nothing does.
 - **What changes:** what the user will see or be able to check when it's done, and what's out of scope. Where something that would change the work is missing, ask for it here.
-- **The approach:** what changes in the code and where, how you'll prove it, including any `make-verifiable` work and which checks ship with the change or stay as evidence, and the failure-check entries a reviewer would care about.
+- **The approach:** what changes in the code and where, how you'll prove it, including any `make-verifiable` work and which checks ship with the change or stay as evidence, what it costs to ship and keep and why that's worth the reach and harm under The problem, and the failure-check entries a reviewer would care about.
 - **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, each with why it lost.
 - **What a reviewer may ask:** each likely question, with its answer.
 

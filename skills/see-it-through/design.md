@@ -10,7 +10,9 @@ Check the destination's commits since your base and open work on the same behavi
 
 For a bug, once it reproduces, decide whether the state that causes it is legitimate: handle a legitimate state where it enters the system, and fix whatever produces an illegitimate one.
 
-Weigh what the change costs, its code, tests, harness, review and upkeep, against who hits the problem, how often, and the harm when they do. Verify coverage is the exception: judge it by whether the flow will be checked again, not by this change's reach. Choose the smallest approach that settles it, and when even that costs more than the problem does, recommend a smaller version or no change in the explainer; the user decides. In the back-and-forth, give the model your reach and cost estimates as premises to check, and weigh a smaller version or no change among the alternatives.
+## Proportion
+
+Ask it every run: is the change worth what it costs? Estimate who hits the problem, how often and the harm when they do, and what the change costs: its code, tests, harness, review, upkeep and the work left to ship it, each marked observed, measured or estimated. A small diff doesn't answer the question by itself; say why it's worth it. Verify coverage is the exception: judge it by whether the flow will be checked again, not by this change's reach. Choose the smallest approach that settles it, and when even that costs more than the problem does, recommend a smaller version or no change; the user decides.
 
 ## The structural question
 
