@@ -10,7 +10,6 @@ through a variable, an environment override or a harness default is marked for
 tracing by hand, and the session records are the check.
 """
 import argparse
-import glob
 import json
 import os
 import re
@@ -35,29 +34,36 @@ HOME = os.path.expanduser("~")
 
 def when(text):
     try:
-        return datetime.fromisoformat(str(text).replace("Z", "+00:00"))
-    except ValueError:
+        at = datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
         return None
+    return at if at.tzinfo else at.replace(tzinfo=timezone.utc)
+
+
+def note(missed, what):
+    missed[what] = missed.get(what, 0) + 1
 
 
 def lines_setting_models(root, missed):
-    def unlisted(_error):
-        missed["folders that could not be listed"] = missed.get("folders that could not be listed", 0) + 1
-
-    for folder, dirs, files in os.walk(root, onerror=unlisted):
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+    for folder, dirs, files in os.walk(root, onerror=lambda _error: note(missed, "folders that could not be listed")):
+        for name in list(dirs):
+            if name in SKIP_DIRS:
+                dirs.remove(name)
+                note(missed, "folders skipped by name (" + ", ".join(sorted(SKIP_DIRS)) + ")")
+            elif os.path.islink(os.path.join(folder, name)):
+                note(missed, "linked folders not followed")
         for name in files:
             path = os.path.join(folder, name)
             setting = SETTING_PROSE if os.path.splitext(name)[1].lower() in PROSE else SETTING_CODE
             try:
                 if os.path.getsize(path) > MAX_BYTES:
-                    missed["files over 1 MB"] = missed.get("files over 1 MB", 0) + 1
+                    note(missed, "files over 1 MB")
                     continue
                 with open(path, encoding="utf-8") as handle:
                     found = [(number, line.strip(), MODEL_ID.findall(line)) for number, line in enumerate(handle, 1)
                              if MODEL_ID.search(line) or setting.search(line)]
             except (OSError, UnicodeDecodeError):
-                missed["files that are not readable text"] = missed.get("files that are not readable text", 0) + 1
+                note(missed, "files that are not readable text")
                 continue
             for number, text, ids in found:
                 yield os.path.relpath(path, root), number, text, ids
@@ -65,23 +71,21 @@ def lines_setting_models(root, missed):
 
 def under(path, root):
     try:
-        return bool(path) and os.path.commonpath([os.path.abspath(path), root]) == root
-    except ValueError:
+        path = os.path.normcase(os.path.abspath(path))
+        return os.path.commonpath([path, os.path.normcase(root)]) == os.path.normcase(root)
+    except (ValueError, TypeError):
         return False
 
 
-def sessions(root, since, missed):
-    """{(provider, model, effort): requests} for sessions whose working directory is under root."""
-    out, seen = {}, set()
-
-    def count(provider, model, effort):
-        key = (provider, model or "unknown", effort or "not recorded")
-        out[key] = out.get(key, 0) + 1
-
-    def rows(pattern, marker):
-        for path in glob.glob(pattern, recursive=True):
+def session_rows(parts, marker, since, missed):
+    """Parsed lines holding `marker`, dated since `since`, from the session files under ~/parts."""
+    top = os.path.join(HOME, *parts)
+    unlisted = lambda _error: note(missed, "session folders that could not be listed")
+    for folder, _dirs, files in os.walk(top, onerror=unlisted) if os.path.isdir(top) else ():
+        for name in files:
+            path = os.path.join(folder, name)
             try:
-                if os.path.getmtime(path) < since.timestamp():
+                if not name.endswith(".jsonl") or os.path.getmtime(path) < since.timestamp():
                     continue
                 with open(path, encoding="utf-8", errors="replace") as handle:
                     for line in handle:
@@ -89,29 +93,38 @@ def sessions(root, since, missed):
                             continue
                         try:
                             row = json.loads(line)
-                        except ValueError:
-                            missed["session lines that could not be parsed"] = missed.get(
-                                "session lines that could not be parsed", 0) + 1
+                            at = when(row.get("timestamp"))
+                            if not at:
+                                raise ValueError
+                        except (ValueError, AttributeError):
+                            note(missed, "session lines that could not be parsed")
                             continue
-                        at = when(row.get("timestamp", ""))
-                        if at and at >= since:
+                        if at >= since:
                             yield row
             except OSError:
-                missed["session files that could not be opened"] = missed.get(
-                    "session files that could not be opened", 0) + 1
+                note(missed, "session files that could not be opened")
 
-    for row in rows(os.path.join(HOME, ".claude", "projects", "**", "*.jsonl"), '"usage"'):
-        message = row.get("message") or {}
-        key = ("claude", message.get("id"), row.get("requestId"))
-        if message.get("model") and key not in seen and under(row.get("cwd"), root):
+
+def sessions(root, since, missed):
+    """{(provider, model, effort): requests} for sessions whose working directory is under root."""
+    out, seen = {}, set()
+
+    def count(provider, key, cwd, model, effort):
+        if key not in seen and under(cwd, root):
             seen.add(key)
-            count("claude", message["model"], row.get("effort") or row.get("perTurnEffort"))
-    for row in rows(os.path.join(HOME, ".codex", "sessions", "**", "*.jsonl"), '"turn_context"'):
-        payload = row.get("payload") or {}
-        key = ("codex", payload.get("turn_id") or row.get("timestamp"))
-        if row.get("type") == "turn_context" and key not in seen and under(payload.get("cwd"), root):
-            seen.add(key)
-            count("codex", payload.get("model"), payload.get("effort") or payload.get("reasoning_effort"))
+            entry = (provider, str(model or "unknown"), str(effort or "not recorded"))
+            out[entry] = out.get(entry, 0) + 1
+
+    for row in session_rows((".claude", "projects"), '"usage"', since, missed):
+        message = row.get("message")
+        if isinstance(message, dict) and message.get("model"):
+            count("claude", ("claude", message.get("id"), row.get("requestId")), row.get("cwd"),
+                  message["model"], row.get("effort") or row.get("perTurnEffort"))
+    for row in session_rows((".codex", "sessions"), '"turn_context"', since, missed):
+        payload = row.get("payload")
+        if row.get("type") == "turn_context" and isinstance(payload, dict):
+            count("codex", ("codex", payload.get("turn_id") or row.get("timestamp")), payload.get("cwd"),
+                  payload.get("model"), payload.get("effort") or payload.get("reasoning_effort"))
     return out
 
 
@@ -124,22 +137,22 @@ def main():
     if not os.path.isdir(root):
         sys.exit(f"not a folder: {root}")
     missed = {}
+    lines = list(lines_setting_models(root, missed))
+    since = datetime.now(timezone.utc) - timedelta(days=args.days)
+    ran = sessions(root, since, missed)
 
     print(f"Lines under {root} that name a model or set an effort")
-    found, by_id = 0, {}
-    for path, number, text, ids in lines_setting_models(root, missed):
-        found += 1
+    by_id = {}
+    for path, number, text, ids in lines:
         for model in ids:
             by_id[model] = by_id.get(model, 0) + 1
-        note = "" if ids or VALUE.search(text) else "   <- value not on this line: trace it by hand"
+        mark = "" if ids or VALUE.search(text) else "   <- value not on this line: trace it by hand"
         if "test" in path.lower():
-            note += "   (in a test)"
-        print(f"  {path}:{number}: {text[:160]}{note}")
-    print(f"  {found} lines. Models named: " + (", ".join(f"{m} x{n}" for m, n in sorted(by_id.items())) or "none"))
+            mark += "   (in a test)"
+        print(f"  {path}:{number}: {text[:160]}{mark}")
+    print(f"  {len(lines)} lines. Models named: " + (", ".join(f"{m} x{n}" for m, n in sorted(by_id.items())) or "none"))
 
-    since = datetime.now(timezone.utc) - timedelta(days=args.days)
     print(f"\nModels recorded for sessions run from under this folder, last {args.days:g} days, this machine")
-    ran = sessions(root, since, missed)
     for (provider, model, effort), requests in sorted(ran.items()):
         unit = "requests" if provider == "claude" else "turns"
         print(f"  {provider}: {model}, effort {effort}: {requests} {unit}")
@@ -149,10 +162,11 @@ def main():
     print("\nNot seen")
     print("  - Choices set outside this folder: harness defaults, user settings, environment variables,")
     print("    arguments passed by whatever starts the workflow.")
-    print("  - Sessions run on another machine, or from a working directory outside this folder, which is")
-    print("    where a launcher that sets its own working directory leaves them.")
+    print("  - Sessions run on another machine, by a provider other than Claude Code and Codex, or from a")
+    print("    working directory outside this folder, which is where a launcher that sets its own leaves them.")
     for what, count in sorted(missed.items()):
         print(f"  - {count} {what}: left out of the lists above.")
+    print("\nReport complete.")
 
 
 if __name__ == "__main__":

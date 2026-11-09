@@ -37,10 +37,14 @@ class Home(unittest.TestCase):
                 handle.write("\n".join(lines) + "\n")
         return path
 
-    def run_script(self, name, *args):
+    def run_script(self, name, *args, fails=False):
         env = dict(os.environ, USERPROFILE=self.home, HOME=self.home)
-        return subprocess.run([sys.executable, "-I", os.path.join(SCRIPTS, name), *args],
+        done = subprocess.run([sys.executable, "-I", os.path.join(SCRIPTS, name), *args],
                               env=env, capture_output=True, text=True)
+        if not fails:
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertTrue(done.stdout.rstrip().endswith("Report complete."), done.stdout)
+        return done
 
     def meter_line(self, minutes, percent, reset=RESET, window="seven_day"):
         info = {"rateLimitType": window, "utilization": percent, "resetsAt": reset,
@@ -87,14 +91,39 @@ class Meter(Home):
 
     def test_prices_need_all_five_rates(self):
         prices = self.write("prices.json", [json.dumps({"some-model": [1, 2]})])
-        done = self.run_script("meter.py", "--prices", prices)
+        done = self.run_script("meter.py", "--prices", prices, fails=True)
         self.assertNotEqual(done.returncode, 0)
         self.assertIn("five non-negative numbers", done.stderr)
+        prices = self.write("prices.json", ["[]"])
+        done = self.run_script("meter.py", "--prices", prices, fails=True)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("one JSON object", done.stderr)
 
-    def test_lines_it_could_not_parse_are_reported(self):
-        self.write(".claude/projects/p/s.jsonl", ['{"usage": broken'])
+    def test_lines_it_could_not_read_are_reported_and_make_the_rate_provisional(self):
+        self.write(".t3/userdata/logs/provider/events.log",
+                   [self.meter_line(-30, 0.10), self.meter_line(-25, 0.10), self.meter_line(-20, 0.11)])
+        self.write(".claude/projects/p/s.jsonl", [
+            self.claude_row(-22, "claude-opus-5-5", output=1_000_000),
+            '{"usage": broken',
+            json.dumps({"timestamp": stamp(-21), "message": "not an object", "usage": 1})])
         out = self.run_script("meter.py").stdout
-        self.assertIn("1 usage lines that could not be parsed", out)
+        self.assertIn("Claude: 2 usage lines that could not be parsed", out)
+        self.assertNotIn("Codex:", out.split("Not seen")[1])
+        self.assertIn("provisional, some of this provider's records could not be read", out)
+
+    def test_a_codex_record_with_no_usage_keeps_the_baseline(self):
+        context = json.dumps({"timestamp": stamp(-31), "type": "turn_context",
+                              "payload": {"model": "gpt-6.1-sol", "turn_id": "t1", "cwd": "C:\\elsewhere"}})
+        meter_only = json.dumps({"timestamp": stamp(-25), "type": "event_msg", "payload": {
+            "type": "token_count", "info": None,
+            "rate_limits": {"primary": {"used_percent": 10.0, "window_minutes": 10080, "resets_at": RESET}}}})
+        self.write(".codex/sessions/2026/11/10/a.jsonl", [
+            context,
+            self.codex_count(-30, total=(1_000_000, 200_000), last=(1_000_000, 200_000)),
+            meter_only,
+            self.codex_count(-20, total=(2_000_000, 400_000), last=(1_000_000, 200_000))])
+        out = self.run_script("meter.py").stdout
+        self.assertIn("gpt-6.1-sol $8.00", out)
 
 
 class Inventory(Home):
@@ -115,6 +144,12 @@ class Inventory(Home):
         out = self.run_script("inventory.py", self.root).stdout
         self.assertIn("claude: claude-opus-5-5, effort high: 1 requests", out)
         self.assertNotIn("claude-sonnet-5-5", out)
+
+    @unittest.skipUnless(os.name == "nt", "Windows paths ignore case")
+    def test_a_working_directory_spelled_in_another_case_still_counts(self):
+        self.write(".claude/projects/p/s.jsonl", [self.claude_row(-5, "claude-opus-5-5", cwd=self.root.upper())])
+        out = self.run_script("inventory.py", self.root.lower()).stdout
+        self.assertIn("claude: claude-opus-5-5, effort high: 1 requests", out)
 
     def test_a_turn_copied_into_a_second_session_counts_once(self):
         turn = json.dumps({"timestamp": stamp(-5), "type": "turn_context",

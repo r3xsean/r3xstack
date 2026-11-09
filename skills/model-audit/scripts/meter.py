@@ -14,7 +14,6 @@ It reads only this machine's records:
 Usage on another machine or app moves the same meters and is not counted here.
 """
 import argparse
-import glob
 import json
 import math
 import os
@@ -53,18 +52,28 @@ class Missed:
 
 def when(text):
     try:
-        return datetime.fromisoformat(str(text).replace("Z", "+00:00"))
-    except ValueError:
+        at = datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
         return None
+    return at if at.tzinfo else at.replace(tzinfo=timezone.utc)
 
 
-def recent(paths, since, missed):
-    for path in paths:
-        try:
-            if os.path.getmtime(path) >= since.timestamp():
-                yield path
-        except OSError:
-            missed.add("files that could not be opened")
+def recent(root, wanted, since, missed):
+    """Files under root whose name passes `wanted`, changed since `since`."""
+    def unlisted(_error):
+        missed.add("folders that could not be listed")
+
+    top = os.path.join(HOME, *root)
+    for folder, _dirs, files in os.walk(top, onerror=unlisted) if os.path.isdir(top) else ():
+        for name in files:
+            if not wanted(name):
+                continue
+            path = os.path.join(folder, name)
+            try:
+                if os.path.getmtime(path) >= since.timestamp():
+                    yield path
+            except OSError:
+                missed.add("files that could not be opened")
 
 
 def lines_of(path, missed):
@@ -78,62 +87,58 @@ def lines_of(path, missed):
 def claude_meter(since, missed):
     """{window: {time: (percent, reset time)}} from T3's provider logs."""
     out = {}
-    for path in recent(glob.glob(os.path.join(HOME, ".t3", "userdata", "logs", "provider", "*.log*")), since, missed):
+    for path in recent((".t3", "userdata", "logs", "provider"), lambda name: ".log" in name, since, missed):
         for line in lines_of(path, missed):
             if '"rate_limit_event"' not in line:
                 continue
             stamp = STAMP.search(line[:80])
             at = when(stamp.group(1)) if stamp else None
-            start = line.find('{"provider"')
             try:
-                info = json.loads(line[start:])["event"]["payload"]["rate_limit_info"]
-            except (ValueError, KeyError, TypeError):
-                missed.add("meter lines that could not be parsed")
-                continue
+                info = json.loads(line[line.find('{"provider"'):])["event"]["payload"]["rate_limit_info"]
+                windows = dict(info.get("unifiedWindows") or {})
+                if info.get("rateLimitType") and info.get("utilization") is not None:
+                    windows.setdefault(info["rateLimitType"], info)
+                found = {name: (round(window["utilization"] * 100, 2), window.get("resetsAt") or 0)
+                         for name, window in windows.items() if (window or {}).get("utilization") is not None}
+            except (ValueError, KeyError, TypeError, AttributeError):
+                at = None
             if not at:
                 missed.add("meter lines that could not be parsed")
-                continue
-            if at < since:
-                continue
-            windows = dict(info.get("unifiedWindows") or {})
-            if info.get("rateLimitType") and info.get("utilization") is not None:
-                windows.setdefault(info["rateLimitType"], info)
-            for name, window in windows.items():
-                level = (window or {}).get("utilization")
-                if level is not None:
-                    out.setdefault(name, {})[at] = (round(level * 100, 2), window.get("resetsAt") or 0)
+            elif at >= since:
+                for name, reading in found.items():
+                    out.setdefault(name, {})[at] = reading
     return out
 
 
 def claude_usage(since, prices, unpriced, missed):
     """[(time, model, cost)] from Claude Code session records, one per API message."""
     seen, out = set(), []
-    pattern = os.path.join(HOME, ".claude", "projects", "**", "*.jsonl")
-    for path in recent(glob.glob(pattern, recursive=True), since, missed):
+    for path in recent((".claude", "projects"), lambda name: name.endswith(".jsonl"), since, missed):
         for line in lines_of(path, missed):
             if '"usage"' not in line:
                 continue
             try:
                 row = json.loads(line)
-            except ValueError:
+                message = row.get("message") or {}
+                usage, model, at = message.get("usage"), message.get("model"), when(row.get("timestamp"))
+                if not usage or not model:
+                    continue
+                key = (message.get("id"), row.get("requestId"))
+                split = usage.get("cache_creation") or {}
+                write_5m = split.get("ephemeral_5m_input_tokens") or 0
+                write_1h = split.get("ephemeral_1h_input_tokens") or 0
+                if not write_5m + write_1h:
+                    write_5m = usage.get("cache_creation_input_tokens") or 0
+                tokens = (usage.get("input_tokens") or 0, usage.get("output_tokens") or 0,
+                          usage.get("cache_read_input_tokens") or 0, write_5m, write_1h)
+                if not at or not all(isinstance(t, (int, float)) for t in tokens):
+                    raise ValueError
+            except (ValueError, TypeError, AttributeError):
                 missed.add("usage lines that could not be parsed")
                 continue
-            message = row.get("message") or {}
-            usage, model, at = message.get("usage"), message.get("model"), when(row.get("timestamp", ""))
-            if not usage or not model or not at or at < since:
-                continue
-            key = (message.get("id"), row.get("requestId"))
-            if key in seen:
-                continue
-            seen.add(key)
-            split = usage.get("cache_creation") or {}
-            write_5m = split.get("ephemeral_5m_input_tokens") or 0
-            write_1h = split.get("ephemeral_1h_input_tokens") or 0
-            if not write_5m + write_1h:
-                write_5m = usage.get("cache_creation_input_tokens") or 0
-            tokens = (usage.get("input_tokens") or 0, usage.get("output_tokens") or 0,
-                      usage.get("cache_read_input_tokens") or 0, write_5m, write_1h)
-            out.append(priced(at, model, tokens, prices, unpriced))
+            if at >= since and key not in seen:
+                seen.add(key)
+                out.append(priced(at, model, tokens, prices, unpriced))
     return sorted(out, key=lambda r: r[0])
 
 
@@ -148,39 +153,44 @@ def counts(usage):
 def codex_records(since, prices, unpriced, missed):
     """({window: {time: (percent, reset time)}}, [(time, model, cost)]) from Codex session records."""
     meters, out, seen = {}, [], set()
-    pattern = os.path.join(HOME, ".codex", "sessions", "**", "*.jsonl")
-    for path in recent(glob.glob(pattern, recursive=True), since, missed):
+    for path in recent((".codex", "sessions"), lambda name: name.endswith(".jsonl"), since, missed):
         model, last = "unknown", None
         for line in lines_of(path, missed):
             if '"turn_context"' not in line and '"token_count"' not in line:
                 continue
             try:
                 row = json.loads(line)
-            except ValueError:
+                payload = row.get("payload") or {}
+                if row.get("type") == "turn_context" and payload.get("model"):
+                    model = payload["model"]
+                if payload.get("type") != "token_count":
+                    continue
+                at = when(row.get("timestamp"))
+                readings = {}
+                for slot in ("primary", "secondary"):
+                    window = (payload.get("rate_limits") or {}).get(slot) or {}
+                    if window.get("used_percent") is not None:
+                        readings[window_name(window.get("window_minutes"))] = (
+                            float(window["used_percent"]), window.get("resets_at") or 0)
+                info = payload.get("info") or {}
+                total = counts(info.get("total_token_usage") or {})
+                request = counts(info.get("last_token_usage") or {})
+                if not at or not all(isinstance(t, (int, float)) for t in total + request):
+                    raise ValueError
+            except (ValueError, TypeError, AttributeError):
                 missed.add("usage lines that could not be parsed")
                 continue
-            payload = row.get("payload") or {}
-            if row.get("type") == "turn_context" and payload.get("model"):
-                model = payload["model"]
-            if payload.get("type") != "token_count":
-                continue
-            at = when(row.get("timestamp", ""))
-            if not at:
-                missed.add("usage lines that could not be parsed")
-                continue
-            for slot in ("primary", "secondary"):
-                window = (payload.get("rate_limits") or {}).get(slot) or {}
-                if window.get("used_percent") is not None and at >= since:
-                    name = window_name(window.get("window_minutes"))
-                    meters.setdefault(name, {})[at] = (float(window["used_percent"]), window.get("resets_at") or 0)
-            info = payload.get("info") or {}
-            total = counts(info.get("total_token_usage") or {})
+            if at >= since:
+                for name, reading in readings.items():
+                    meters.setdefault(name, {})[at] = reading
+            if not info.get("total_token_usage"):
+                continue  # a meter-only record: the usage baseline stands
             # A session that continues or forks another starts with the totals it inherited, and
             # copies the parent's records: price the request alone there, and each record once.
             if last is not None and all(a >= b for a, b in zip(total, last)):
                 spent = tuple(a - b for a, b in zip(total, last))
             elif info.get("last_token_usage"):
-                spent = counts(info["last_token_usage"])
+                spent = request
             else:
                 spent = (0, 0, 0)
                 missed.add("Codex sessions whose first record has no per-request usage")
@@ -260,8 +270,9 @@ def most_at_one_level(readings, usage):
     return best
 
 
-def report(name, readings, usage):
+def report(name, readings, usage, incomplete):
     latest = max(readings)
+    caveat = "; provisional, some of this provider's records could not be read" if incomplete else ""
     print(f"  {name}: {readings[latest][0]:.0f}% used at {latest.isoformat(timespec='minutes')} "
           f"({len(readings)} readings)")
     found, skipped = rate_per_model(readings, usage)
@@ -274,7 +285,8 @@ def report(name, readings, usage):
         doubt = (f"; but ${still[model]:.2f} was spent at one level, so this meter may not count this model"
                  if still.get(model, 0) > 2 * values[-1] else "")
         print(f"    {model}: estimate ${rate:.2f} per 1%  (upper quartile of {len(values)} clean steps; "
-              f"median ${statistics.median(values):.2f}, range ${values[0]:.2f} to ${values[-1]:.2f}{doubt})")
+              f"median ${statistics.median(values):.2f}, range ${values[0]:.2f} to ${values[-1]:.2f}"
+              f"{doubt}{caveat})")
     if not found:
         print("    no step had one priced model to itself; no rate can be given")
     for model, cost in sorted(still.items()):
@@ -296,6 +308,8 @@ def load_prices(path):
             added = json.load(handle)
     except (OSError, ValueError) as error:
         sys.exit(f"--prices could not be read: {error}")
+    if not isinstance(added, dict):
+        sys.exit("--prices must hold one JSON object of model: [five rates]")
     for model, rates in added.items():
         good = (isinstance(rates, list) and len(rates) == 5 and all(
             isinstance(r, (int, float)) and not isinstance(r, bool) and math.isfinite(r) and r >= 0 for r in rates))
@@ -314,31 +328,24 @@ def main():
     since = when(args.since) if args.since else datetime.now(timezone.utc) - timedelta(days=args.days)
     if since is None:
         sys.exit("--since is not an ISO time")
-    if since.tzinfo is None:
-        since = since.replace(tzinfo=timezone.utc)
     prices = dict(PRICES)
     if args.prices:
         prices.update(load_prices(args.prices))
-    unpriced, missed = {}, Missed()
+    unpriced, lost = {}, {"Claude": Missed(), "Codex": Missed()}
 
     print(f"Reading from {since.isoformat(timespec='minutes')}. Dollars are list API prices, not plan charges.")
     print("A plan can have more than one meter, such as a sub-limit that counts only some models.")
-    print("\nClaude")
-    usage = claude_usage(since, prices, unpriced, missed)
-    meters = claude_meter(since, missed)
-    print(f"  usage on this machine: {totals(usage)}")
-    for name in sorted(meters):
-        report(name, meters[name], usage)
-    if not meters:
-        print("  no meter readings found in ~/.t3/userdata/logs/provider")
-
-    print("\nCodex")
-    meters, usage = codex_records(since, prices, unpriced, missed)
-    print(f"  usage on this machine: {totals(usage)}")
-    for name in sorted(meters):
-        report(name, meters[name], usage)
-    if not meters:
-        print("  no meter readings found in ~/.codex/sessions")
+    print("This report is whole only if it ends with the line 'Report complete.'")
+    usage = claude_usage(since, prices, unpriced, lost["Claude"])
+    found = {"Claude": (claude_meter(since, lost["Claude"]), usage, "~/.t3/userdata/logs/provider"),
+             "Codex": codex_records(since, prices, unpriced, lost["Codex"]) + ("~/.codex/sessions",)}
+    for provider, (meters, usage, where) in found.items():
+        print(f"\n{provider}")
+        print(f"  usage on this machine: {totals(usage)}")
+        for name in sorted(meters):
+            report(name, meters[name], usage, bool(lost[provider].counts))
+        if not meters:
+            print(f"  no meter readings found in {where}")
 
     print("\nNot seen")
     print("  - Any other machine or app on the same plans. Its usage moves these meters and makes a step")
@@ -346,10 +353,13 @@ def main():
     print("    as provisional.")
     for model, count in sorted(unpriced.items()):
         print(f"  - {model}: {count:,} tokens with no price; steps containing it were left out. Add it with --prices.")
-    for what, count in sorted(missed.counts.items()):
-        print(f"  - {count} {what}: the figures above leave them out and may be incomplete.")
+    for provider, missed in lost.items():
+        for what, count in sorted(missed.counts.items()):
+            print(f"  - {provider}: {count} {what}; its figures leave them out and its rates are provisional.")
+    print("  - Providers other than Claude and Codex.")
     print("  - Precision: a meter moves in whole percents, so one step's rate can be off by its own size.")
     print("    Rely on a median of several clean steps, and on none from a single step.")
+    print("\nReport complete.")
 
 
 if __name__ == "__main__":
