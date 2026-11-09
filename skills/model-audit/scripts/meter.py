@@ -64,7 +64,10 @@ def recent(root, wanted, since, missed):
         missed.add("folders that could not be listed")
 
     top = os.path.join(HOME, *root)
-    for folder, _dirs, files in os.walk(top, onerror=unlisted) if os.path.isdir(top) else ():
+    for folder, dirs, files in os.walk(top, onerror=unlisted) if os.path.lexists(top) else ():
+        for name in dirs:
+            if os.path.islink(os.path.join(folder, name)):
+                missed.add("linked folders not followed")
         for name in files:
             if not wanted(name):
                 continue
@@ -74,6 +77,15 @@ def recent(root, wanted, since, missed):
                     yield path
             except OSError:
                 missed.add("files that could not be opened")
+
+
+def number(value):
+    """A token count as recorded: absent means none; anything but a number is a bad record."""
+    if value is None:
+        return 0
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(value)
+    return value
 
 
 def lines_of(path, missed):
@@ -125,13 +137,13 @@ def claude_usage(since, prices, unpriced, missed):
                     continue
                 key = (message.get("id"), row.get("requestId"))
                 split = usage.get("cache_creation") or {}
-                write_5m = split.get("ephemeral_5m_input_tokens") or 0
-                write_1h = split.get("ephemeral_1h_input_tokens") or 0
+                write_5m = number(split.get("ephemeral_5m_input_tokens"))
+                write_1h = number(split.get("ephemeral_1h_input_tokens"))
                 if not write_5m + write_1h:
-                    write_5m = usage.get("cache_creation_input_tokens") or 0
-                tokens = (usage.get("input_tokens") or 0, usage.get("output_tokens") or 0,
-                          usage.get("cache_read_input_tokens") or 0, write_5m, write_1h)
-                if not at or not all(isinstance(t, (int, float)) for t in tokens):
+                    write_5m = number(usage.get("cache_creation_input_tokens"))
+                tokens = (number(usage.get("input_tokens")), number(usage.get("output_tokens")),
+                          number(usage.get("cache_read_input_tokens")), write_5m, write_1h)
+                if not at:
                     raise ValueError
             except (ValueError, TypeError, AttributeError):
                 missed.add("usage lines that could not be parsed")
@@ -147,7 +159,8 @@ def window_name(minutes):
 
 
 def counts(usage):
-    return (usage.get("input_tokens") or 0, usage.get("cached_input_tokens") or 0, usage.get("output_tokens") or 0)
+    return (number(usage.get("input_tokens")), number(usage.get("cached_input_tokens")),
+            number(usage.get("output_tokens")))
 
 
 def codex_records(since, prices, unpriced, missed):
@@ -175,7 +188,7 @@ def codex_records(since, prices, unpriced, missed):
                 info = payload.get("info") or {}
                 total = counts(info.get("total_token_usage") or {})
                 request = counts(info.get("last_token_usage") or {})
-                if not at or not all(isinstance(t, (int, float)) for t in total + request):
+                if not at:
                     raise ValueError
             except (ValueError, TypeError, AttributeError):
                 missed.add("usage lines that could not be parsed")

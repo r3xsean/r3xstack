@@ -70,6 +70,8 @@ def lines_setting_models(root, missed):
 
 
 def under(path, root):
+    if not path:
+        return False
     try:
         path = os.path.normcase(os.path.abspath(path))
         return os.path.commonpath([path, os.path.normcase(root)]) == os.path.normcase(root)
@@ -81,7 +83,10 @@ def session_rows(parts, marker, since, missed):
     """Parsed lines holding `marker`, dated since `since`, from the session files under ~/parts."""
     top = os.path.join(HOME, *parts)
     unlisted = lambda _error: note(missed, "session folders that could not be listed")
-    for folder, _dirs, files in os.walk(top, onerror=unlisted) if os.path.isdir(top) else ():
+    for folder, dirs, files in os.walk(top, onerror=unlisted) if os.path.lexists(top) else ():
+        for name in dirs:
+            if os.path.islink(os.path.join(folder, name)):
+                note(missed, "linked session folders not followed")
         for name in files:
             path = os.path.join(folder, name)
             try:
@@ -117,14 +122,20 @@ def sessions(root, since, missed):
 
     for row in session_rows((".claude", "projects"), '"usage"', since, missed):
         message = row.get("message")
-        if isinstance(message, dict) and message.get("model"):
+        if message is not None and not isinstance(message, dict):
+            note(missed, "session lines that could not be parsed")
+        elif message and message.get("model"):
             count("claude", ("claude", message.get("id"), row.get("requestId")), row.get("cwd"),
                   message["model"], row.get("effort") or row.get("perTurnEffort"))
     for row in session_rows((".codex", "sessions"), '"turn_context"', since, missed):
         payload = row.get("payload")
-        if row.get("type") == "turn_context" and isinstance(payload, dict):
-            count("codex", ("codex", payload.get("turn_id") or row.get("timestamp")), payload.get("cwd"),
-                  payload.get("model"), payload.get("effort") or payload.get("reasoning_effort"))
+        if row.get("type") != "turn_context":
+            continue
+        if not isinstance(payload, dict):
+            note(missed, "session lines that could not be parsed")
+            continue
+        count("codex", ("codex", payload.get("turn_id") or row.get("timestamp")), payload.get("cwd"),
+              payload.get("model"), payload.get("effort") or payload.get("reasoning_effort"))
     return out
 
 
