@@ -5,9 +5,14 @@ description: Use when the user says "see it through with" a model.
 
 Take a code change from the user's request to where it should end up, with another model as reviewer. The user decides twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours.
 
-The other model is the newest model, in `orchestrator_capabilities`, of the family the user named, at the effort they named. The same model and effort run every back-and-forth, code loop and review below, except a key decision's debate. If the family or effort is missing, ask for it and do nothing else until they answer.
+The other model is the newest model, in `orchestrator_capabilities`, of the family the user named, at the effort they named. The same model and effort run every back-and-forth, code loop and review below, except step 3's debate on the approach. If the family or effort is missing, ask for it and do nothing else until they answer.
 
-A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner). Unless the user names a runner: the newest Fable model at medium, debating the other model; for a key decision, the newest Fable model at high, debating the newest Astra model at high in place of the other model. A key decision is one where a trigger in design.md's structural question fires and you can state a question whose answer could change the approach. When a runner's or its partner's model is unavailable, say so and argue the approach yourself with the other model.
+A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against a partner. Both are the ones the user names, and otherwise the defaults below. A key decision is one where a trigger in design.md's structural question fires and you can state a question whose answer could change the approach. When the runner's or the partner's model is unavailable, say so and argue the approach yourself with the other model.
+
+**Defaults for the approach debate.** Each is the newest model of its family in `orchestrator_capabilities`.
+
+- A decision: Opus at xhigh is the runner, Sol at xhigh the partner.
+- A key decision: Fable at high is the runner, Astra at high the partner.
 
 ## 1. Destination and rules
 
@@ -36,7 +41,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, go back and forth with the model on the approach (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test that will cover it or the limitation you accept.
 
