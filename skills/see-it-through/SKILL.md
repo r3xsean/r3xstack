@@ -1,18 +1,19 @@
 ---
 name: see-it-through
-description: Use when the user says "see it through with" a model.
+description: Use when the user says "see it through".
 ---
 
 Take a code change from the user's request to where it should end up, with another model as reviewer. The user decides twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours.
 
-The other model is the newest model, in `orchestrator_capabilities`, of the family the user named, at the effort they named. The same model and effort run every back-and-forth, code loop and review below, except step 3's debate on the approach. If the family or effort is missing, ask for it and do nothing else until they answer.
+The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below, except step 3's debate on the approach. If they name only one of the two, ask for the other and do nothing else until they answer.
 
 A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against a partner. Both are the ones the user names, and otherwise the defaults below. A key decision is one where a trigger in design.md's structural question fires and you can state a question whose answer could change the approach. When the runner's or the partner's model is unavailable, say so and argue the approach yourself with the other model.
 
-**Defaults for the approach debate.** Each is the newest model of its family in `orchestrator_capabilities`.
+**Defaults.** Each is the newest model of its family in `orchestrator_capabilities`.
 
-- A decision: Opus at xhigh is the runner, Sol at xhigh the partner.
-- A key decision: Fable at high is the runner, Astra at high the partner.
+- The other model: Sol at xhigh.
+- The approach debate on a decision: Opus at xhigh is the runner, Sol at xhigh the partner.
+- The approach debate on a key decision: Fable at high is the runner, Astra at high the partner.
 
 ## 1. Destination and rules
 

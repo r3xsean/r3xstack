@@ -16,7 +16,7 @@ My personal agent skills.
 | [`incorporate`](skills/incorporate/) | Use when the user says "incorporate this into my workflow with" a model. |
 | [`make-verifiable`](skills/make-verifiable/) | Use when the user asks to make a repo verifiable, or another skill needs a repo's verify skill created, extended or repaired. |
 | [`model-audit`](skills/model-audit/) | Use when the user says "audit the models" in a workflow, or another skill hands over a model launch. |
-| [`see-it-through`](skills/see-it-through/) | Use when the user says "see it through with" a model. |
+| [`see-it-through`](skills/see-it-through/) | Use when the user says "see it through". |
 | [`transcribe-youtube`](skills/transcribe-youtube/) | Transcribe a YouTube video into a timestamped text file. Use when a user provides a YouTube URL and needs its transcript, captions, quotes, or searchable video text. |
 | [`writing-steering-files`](skills/writing-steering-files/) | Create or edit a steering file — a skill, an AGENTS.md/CLAUDE.md, or a durable agent prompt — through a grill-and-distill loop. Use whenever writing a new skill, AGENTS.md, automation prompt, or product system prompt, changing an existing one, or when another skill needs a steering file authored. |
 
