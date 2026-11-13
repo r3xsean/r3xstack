@@ -22,7 +22,7 @@ Give your own answer, its reasoning, and how confident you are. Mark each premis
 
 ## 2. Exchanges
 
-An exchange is one message from you and its reply. Send every exchange as a `t3_thread_send` to the same child, never a new `delegate_task`. Your first message carries your answer and your critique of theirs; later ones carry your updated position and your critique of their last reply. End each message with your current position in one line, plus what changed it if it did.
+An exchange is one message from you and its reply. Send every message after the opening (each exchange, and any resend) with `t3_thread_send` to the `childThreadId` the opening `delegate_task` returned, without `freshContext`, so the other model keeps the whole argument. A debate is one continuing conversation, not a new review: this overrides the harness rule that a re-check is a new `delegate_task`. Your first message carries your answer and your critique of theirs; later ones carry your updated position and your critique of their last reply. End each message with your current position in one line, plus what changed it if it did.
 
 Agreement is not evidence. Every premise that would change the conclusion if it were false gets checked against a source, a command or the code, whether it was disputed, agreed by both, or given up by one side; either of you can check it, and the result goes in the next message.
 
