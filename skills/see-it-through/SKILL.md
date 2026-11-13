@@ -5,15 +5,15 @@ description: Use when the user says "see it through".
 
 Take a code change from the user's request to where it should end up, with another model as reviewer. The user decides twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours.
 
-The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below, except step 3's debate on the approach. If they name only one of the two, ask for the other and do nothing else until they answer.
+The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below. If they name only one of the two, ask for the other and do nothing else until they answer.
 
-A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against a partner. Both are the ones the user names, and otherwise the defaults below. A key decision is one where a trigger in design.md's structural question fires and you can state a question whose answer could change the approach. When the runner's or the partner's model is unavailable, say so and argue the approach yourself with the other model.
+A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look reads what they conclude. Each is the model the user names for it, and otherwise the default below. When the runner's model is unavailable, say so and argue the approach yourself with the other model; when the second look's is, say so in the explainer and go on without it.
 
 **Defaults.** Each is the newest model of its family in `orchestrator_capabilities`.
 
 - The other model: Sol at xhigh.
-- The approach debate on a decision: Opus at xhigh is the runner, Sol at xhigh the partner.
-- The approach debate on a key decision: Fable at high is the runner, Astra at high the partner.
+- The runner: Opus at xhigh.
+- The second look: Fable at high.
 
 ## 1. Destination and rules
 
@@ -44,6 +44,14 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
+**The second look.** When the back-and-forth concludes, start a fresh agent on the second look's model with the request, the record, and the reproduction's result and how to run it when there is one, and this brief:
+
+```
+Another model worked on this request and two models argued out an approach to it; their record and the reproduction's result are below. You're a fresh pair of eyes and nothing in the record binds you: look wherever you like, play with the reproduction if there is one, and tell us how you'd make this better. That can be a change to their approach, a different approach, or a different reading of the problem. If theirs is already what you'd do, say so. Say what each point rests on. Change no file in the repo.
+```
+
+What it raises goes word for word into the same back-and-forth, for up to 3 more exchanges and a new record. Unless that record adopts the point as it was given, send the record to the same agent once more, to concede or to hold with what would change its mind; it raises nothing new. A point it holds makes the explainer a choice.
+
 Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test that will cover it or the limitation you accept.
 
 Send the user the **explainer**, in plain language, under these headings, in order. Say each thing once.
@@ -52,10 +60,19 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 - **Why it happens:** the cause, in plain terms; for a feature, what stands in the way today. Leave this heading out for a feature when nothing does.
 - **What changes:** what the user will see or be able to check when it's done, and what's out of scope. Where something that would change the work is missing, ask for it here.
 - **The approach:** what changes in the code and where, how you'll prove it, including any `make-verifiable` work and which checks ship with the change or stay as evidence, what it costs to ship and keep and why that's worth the reach and harm under The problem, and the failure-check entries a reviewer would care about.
-- **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, each with why it lost.
+- **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, and any point the second look raised that wasn't adopted, each with why it lost.
 - **What a reviewer may ask:** each likely question, with its answer.
 
-Then stop: build nothing until the user approves. A plain approval in any wording lets you build. Anything else goes word for word into the same back-and-forth as a further exchange, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
+**A choice.** When the second look holds a point, the user is choosing between two approaches, and the explainer opens by saying so. The problem and Why it happens stay. In place of What changes, The approach and Alternatives weighed:
+
+- **Approach A**, then **Approach B**, one after the other and not as a table: who backs it, what the user will see or be able to check when it's done, what changes in the code and where, how you'll prove it, what it costs to ship and keep, and its main risk. Write each fully enough to build from.
+- **Where they disagree:** the point the split turns on, what each side showed, and what was checked or couldn't be.
+- **Recommendation:** the one you'd build and why, and what would make the other the better pick. Weigh the two afresh when the back-and-forth turned one down on cost or risk and not on a fact it checked.
+- **Alternatives both set aside:** as Alternatives weighed.
+- **What a reviewer may ask:** as above.
+- **How to answer:** what a plain approval builds, and how to pick the other.
+
+Then stop: build nothing until the user approves. A plain approval in any wording lets you build; of a choice, it builds the recommended approach, and naming the other builds that one. Anything else goes word for word into the same back-and-forth as a further exchange, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
 
 The approval covers the explainer as written. When a test, a demo or a review changes what the user gets, its visible behaviour, compatibility, scope, the action you'll take to ship it, or a tradeoff the explainer accepted, quote the sentence it falsifies, work it out with the model, send a revised explainer that says what changed, and stop again. Smaller discoveries, such as using a different internal helper, go in the ship message's "what changed since".
 
@@ -75,7 +92,7 @@ Before every push, rerun the check behind each ticked box and each claim, and re
 
 ## 6. Ship message
 
-Send the user: a two- or three-sentence recap of the explainer, what changed since, the evidence, the captures, the write-up, the diff, and the exact action you'll take on approval. When the code loop finished with unresolved disputes, lead with them: each claim, what each side showed, and what approving ships with it. Before sending it, redo design.md's overlap check. Stop until they approve it.
+Send the user: a two- or three-sentence recap of the explainer, what changed since, the evidence, the captures, the write-up, the diff, and the exact action you'll take on approval. When the code loop finished with unresolved disputes, give them, with the diff and what each side showed, to a fresh agent on the second look's model, asking which of them matter to what the user gets and what to do next: ship, fix one thing, or rethink. Then lead the message with them: each claim, what each side showed, the second look's read, and what approving ships with it. Its read is advice, and the loop stays not approved. Before sending the message, redo design.md's overlap check. Stop until they approve it. A change they ask for instead is made and proved as step 4 says, with a code loop when it changes behaviour, and comes back as a new ship message.
 
 ## 7. Through to the destination
 
