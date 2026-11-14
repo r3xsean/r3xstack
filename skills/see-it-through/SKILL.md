@@ -17,7 +17,7 @@ A runner argues the approach in step 3 in your place (the `back-and-forth` skill
 
 ## 1. Destination and rules
 
-Work out where the change ends: a tested local change, a pushed branch, an open PR, merged, or deployed. Ask only when it's unclear and the answer changes the work. Saying "see it through" approves no push, PR or deploy; the ship message's approval does.
+Work out where the change ends: a tested local change, a pushed branch, an open PR, merged, or deployed. Ask only when it's unclear and the answer changes the work, in step 3's grill. Saying "see it through" approves no push, PR or deploy; the ship message's approval does.
 
 The rules of the repo you're changing, and any process file the user points you to, win where they differ from this skill.
 
@@ -42,7 +42,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. Once you've grounded the change, and before you weigh approaches, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. After its "Ground the change" and before its Proportion, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 **The second look.** When the back-and-forth concludes, start a fresh agent on the second look's model with the request, the record, and the reproduction's result and how to run it when there is one, and this brief:
 
@@ -58,7 +58,7 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 
 - **The problem:** what a user sees today, who hits it and how often (observed or estimated; no reports means unknown, not rare), why it matters, and your reproduction, with its capture when it has one; for a feature, what's missing today. When the user asked for the change, open with their words.
 - **Why it happens:** the cause, in plain terms; for a feature, what stands in the way today. Leave this heading out for a feature when nothing does.
-- **What changes:** what the user will see or be able to check when it's done, what's out of scope, and the decisions the grill settled, marking those they handed over. A decision the `grill-me` skill would put to them that opened after the grill is asked here, with a recommendation a plain approval accepts.
+- **What changes:** what the user will see or be able to check when it's done, what's out of scope, and the decisions the grill settled, marking those they left to you. A decision the `grill-me` skill would put to them that opened after the grill is asked here, with a recommendation a plain approval accepts.
 - **The approach:** what changes in the code and where, how you'll prove it, including any `make-verifiable` work and which checks ship with the change or stay as evidence, what it costs to ship and keep and why that's worth the reach and harm under The problem, and the failure-check entries a reviewer would care about.
 - **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, and any point the second look raised that wasn't adopted, each with why it lost.
 - **What a reviewer may ask:** each likely question, with its answer.
