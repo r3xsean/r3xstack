@@ -7,7 +7,7 @@ Take a code change from the user's request to where it should end up, with anoth
 
 The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below. If they name only one of the two, ask for the other and do nothing else until they answer.
 
-A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look reads what they conclude. Each is the model the user names for it, and otherwise the default below. When the runner's model is unavailable, say so and argue the approach yourself with the other model; when the second look's is, say so in the explainer and go on without it.
+A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default below. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
 
 **Defaults.** Each is the newest model of its family in `orchestrator_capabilities`.
 
@@ -44,13 +44,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 Read [design.md](design.md) and do what it asks before choosing an approach. After its "Ground the change" and before its Proportion, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on, and its assumptions go with them, marked as yours. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
-**The second look.** When the back-and-forth concludes, start a fresh agent on the second look's model with the request, the record, and the reproduction's result and how to run it when there is one, and this brief:
-
-```
-Another model worked on this request and two models argued out an approach to it; their record and the reproduction's result are below. You're a fresh pair of eyes and nothing in the record binds you: look wherever you like, play with the reproduction if there is one, and tell us how you'd make this better. That can be a change to their approach, a different approach, or a different reading of the problem. If theirs is already what you'd do, say so. Say what each point rests on. Change no file in the repo.
-```
-
-What it raises goes word for word into the same back-and-forth, for up to 3 more exchanges and a new record. Unless that record adopts the point as it was given, send the record to the same agent once more, to concede or to hold with what would change its mind; it raises nothing new. A point it holds makes the explainer a choice.
+**The second look.** When the back-and-forth concludes, get a second look at its record (the `second-look` skill), with the request, and the reproduction's result and how to run it when there is one. Its report goes in the explainer, and a point it holds makes the explainer a choice.
 
 Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test you'll write to cover it (not one you expect the breaker to write, since a light run may start none) or the limitation you accept.
 
