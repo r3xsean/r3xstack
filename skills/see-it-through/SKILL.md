@@ -3,7 +3,7 @@ name: see-it-through
 description: Use when the user says "see it through".
 ---
 
-Take a code change from the user's request to where it should end up, with another model as reviewer. The user decides twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours.
+Take a code change from the user's request to where it should end up, with another model as reviewer. The user approves twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours, except what step 3's grill puts to them.
 
 The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below. If they name only one of the two, ask for the other and do nothing else until they answer.
 
@@ -42,7 +42,7 @@ Then set the tier. **Full** when the changed behaviour reaches persistence, conc
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. Once you've grounded the change, and before you weigh approaches, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 **The second look.** When the back-and-forth concludes, start a fresh agent on the second look's model with the request, the record, and the reproduction's result and how to run it when there is one, and this brief:
 
@@ -58,7 +58,7 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 
 - **The problem:** what a user sees today, who hits it and how often (observed or estimated; no reports means unknown, not rare), why it matters, and your reproduction, with its capture when it has one; for a feature, what's missing today. When the user asked for the change, open with their words.
 - **Why it happens:** the cause, in plain terms; for a feature, what stands in the way today. Leave this heading out for a feature when nothing does.
-- **What changes:** what the user will see or be able to check when it's done, and what's out of scope. Where something that would change the work is missing, ask for it here.
+- **What changes:** what the user will see or be able to check when it's done, what's out of scope, and the decisions the grill settled, marking those they handed over. A decision the `grill-me` skill would put to them that opened after the grill is asked here, with a recommendation a plain approval accepts.
 - **The approach:** what changes in the code and where, how you'll prove it, including any `make-verifiable` work and which checks ship with the change or stay as evidence, what it costs to ship and keep and why that's worth the reach and harm under The problem, and the failure-check entries a reviewer would care about.
 - **Alternatives weighed:** every strong alternative, design.md's structural option among them whenever a credible one exists, and any point the second look raised that wasn't adopted, each with why it lost.
 - **What a reviewer may ask:** each likely question, with its answer.
@@ -70,7 +70,7 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 - **Recommendation:** the one you'd build and why, and what would make the other the better pick. Weigh the two afresh when the back-and-forth turned one down on cost or risk and not on a fact it checked.
 - **Alternatives both set aside:** as Alternatives weighed.
 - **What a reviewer may ask:** as above.
-- **How to answer:** what a plain approval builds, and how to pick the other.
+- **How to answer:** what a plain approval builds, and how to pick the other; then the decisions, as What changes gives them.
 
 Then stop: build nothing until the user approves. A plain approval in any wording lets you build; of a choice, it builds the recommended approach, and naming the other builds that one. Anything else goes word for word into the same back-and-forth as a further exchange, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
 

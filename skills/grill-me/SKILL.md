@@ -1,0 +1,18 @@
+---
+name: grill-me
+description: Use when the user says "grill me", or another skill asks for a grill.
+---
+
+Settle with the user the decisions about a request, plan or idea that only they can make, and nothing else.
+
+## What's theirs
+
+Ask a question only when its plausible answers would materially change what the user gets: what they see it do, compatibility, scope, a tradeoff they'd accept, or the cost to ship. Don't ask when the request, a recorded decision, or something the user handed over that covers this decision already settles it; being asked for a grill hands nothing over. Find facts yourself, by looking or trying. Current behaviour shows what exists, and settles what's wanted only where the request or a recorded decision keeps it. How it's built is yours unless the user puts the mechanism in question; when a choice of how brings such a tradeoff, ask about its consequence, not the mechanism.
+
+## Asking
+
+Ask in rounds, each as one plain chat message; never use your question tool. A round holds every open question that doesn't wait on another's answer, numbered, each with your recommended answer and worded so "yes" accepts it. A question that depends on one still open waits for a later round. There's no cap on questions.
+
+## Done
+
+Done when no question that qualifies is open. Reply with each decision and its answer, marking those the user handed over; when nothing qualified, say so in one line and ask nothing. When the user invoked this directly, that reply ends your turn and approves nothing; when another skill called it, that skill says what comes next.
