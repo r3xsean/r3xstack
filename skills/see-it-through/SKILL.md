@@ -52,7 +52,7 @@ Another model worked on this request and two models argued out an approach to it
 
 What it raises goes word for word into the same back-and-forth, for up to 3 more exchanges and a new record. Unless that record adopts the point as it was given, send the record to the same agent once more, to concede or to hold with what would change its mind; it raises nothing new. A point it holds makes the explainer a choice.
 
-Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test that will cover it or the limitation you accept.
+Then write the failure check: go through the Conditions in the `code-loop` skill's brief header, plus who relied on the behaviour you're changing, and for each that applies, name the test you'll write to cover it (not one you expect the breaker to write, since a light run may start none) or the limitation you accept.
 
 Send the user the **explainer**, in plain language, under these headings, in order. Say each thing once.
 
