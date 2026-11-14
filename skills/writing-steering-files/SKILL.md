@@ -41,6 +41,8 @@ No file writing yet. Convert every candidate rule into a **behavioural intent**:
 - **Automation prompts only:** settle what belongs in the prompt versus a skill the run already loads, and what the run may write.
 - **Product prompts only:** state each intent as a situation a real user could create, so it can become a probe in step 5.
 
+Put the decisions only the human can make — the forks, not the intent list — through the `grill-me` skill.
+
 Done when the human approves the intent list. For edits, that list covers only the delta.
 
 ### 3. Shape
