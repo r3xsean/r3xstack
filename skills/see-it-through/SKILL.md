@@ -5,6 +5,8 @@ description: Use when the user says "see it through".
 
 Take a code change from the user's request to where it should end up, with another model as reviewer. The user approves twice: the approach, at the explainer, and the result, at the ship message. Everything between is yours, except what step 3's grill puts to them.
 
+**Auto approve.** When the request says to auto approve, the ship message is the user's only approval. Answer the grill yourself with each recommended answer, and settle the same way anything else this skill would ask before the ship message. Approve each explainer yourself, revised ones included, by building its recommended approach, and still send it, marked auto-approved. The ship message then also lists each answer and choice you made in the user's place.
+
 The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below. If they name only one of the two, ask for the other and do nothing else until they answer.
 
 A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default below. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
