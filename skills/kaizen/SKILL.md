@@ -19,7 +19,7 @@ The user can change any of these by saying so, in their own words, when they sta
 | Report | An HTML page, plus a short list in chat | "Chat only" |
 | Models | Reviewers and the runs launched at step 7: the model and effort this thread runs on. Probes: Sol at high. Debates: the runner and the other model from the `see-it-through` skill's Defaults. Close calls: its second look | Any role, with model and effort |
 
-Start agents all at once wherever a step says so. When the harness refuses more, start the rest as earlier ones finish.
+Start every agent this skill names as a `delegate_task` with its model and effort set, never as a native subagent: native subagents stop at 20. Start them all at once wherever a step says so; when the harness refuses more, start the rest as earlier ones finish.
 
 ## The record
 
