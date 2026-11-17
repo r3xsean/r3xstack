@@ -1,0 +1,4 @@
+interface:
+  display_name: "Watch Video"
+  short_description: "Transcripts, details and frames from any video"
+  default_prompt: "Use $watch-video to watch this video: <URL>."
