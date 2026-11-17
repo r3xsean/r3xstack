@@ -7,15 +7,18 @@ Take a code change from the user's request to where it should end up, with anoth
 
 **Auto approve.** When the request says to auto approve, the ship message is the user's only approval. Answer the grill yourself with each recommended answer, and settle the same way anything else this skill would ask before the ship message. Approve each explainer yourself, revised ones included, by building its recommended approach, and still send it, marked auto-approved. The ship message then also lists each answer and choice you made in the user's place.
 
-The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name; when they name neither, it is the default below. The same model and effort run every back-and-forth, code loop and review below. If they name only one of the two, ask for the other and do nothing else until they answer.
+The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name, in every tier; when they name neither, it is the default below for the run's tier. It argues every back-and-forth and reviews every code loop below; the breaker and the write-up's fact-check run on their own default. If they name only one of the two, ask for the other and do nothing else until they answer.
 
-A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default below. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
+A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default below for the run's tier. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
 
 **Defaults.** Each is the newest model of its family in `orchestrator_capabilities`.
 
-- The other model: Sol at xhigh.
-- The runner: Opus at xhigh.
-- The second look: Fable at high.
+| Role | Light and medium | Heavy |
+|---|---|---|
+| The other model | Sol at high | Astra at high |
+| The runner | Opus at xhigh | Fable at high |
+| The breaker and the fact-check | Sol at high | Sol at high |
+| The second look | Fable at high | Fable at high |
 
 ## 1. Destination and rules
 
@@ -40,11 +43,17 @@ Build no guard for a failure path you haven't reproduced; list it in the explain
 
 Reproduce and prove through the repo's verify skill: `.agents/skills/verify/` in the repo, or where the repo's AGENTS.md puts it. When there is none, or it doesn't cover the flow you need, reproduce by hand for now and make building that coverage with the `make-verifiable` skill part of the approach.
 
-Then set the tier. **Full** when the changed behaviour reaches persistence, concurrency, authorization, migrations, a public contract, destructive effects or shared state ownership, or when you can't yet tell how the changed code is reached or how well tests cover it; judge by the callers and state writers you find, not by file names. **Light** otherwise. A light run that turns up one of these becomes full.
+Then set the tier, judging by the callers and state writers you find, not by file names, and give it with its reason under the explainer's The approach (in the ship message when there is no explainer).
+
+- **Heavy** when a mistake would cost something that can't be taken back: existing data lost or corrupted (stored records rewritten, migrated or deleted, or existing records read differently); an irreversible action taken, or taken in more cases (a delete, a payment, a send, a production write, an action in the user's app or game); more access granted (a permission or guard loosened); something outside the repo broken that reads an API, file format or protocol the change alters; or ownership moved of state that other processes, users or stored data depend on. Also heavy when, after tracing the callers, you still can't tell how the changed code is reached.
+- **Medium** when the change alters stored data, permissions, the ordering of concurrent operations, an irreversible effect, an outside contract or the ownership of shared state, and no heavy case holds: a mistake could be undone and stays inside the project.
+- **Light** otherwise.
+
+In a project with no users or stored data yet, a run is medium at most. An upstream PR is not by itself an outside contract. A tier only rises: when it rises before the explainer is approved, the approach is argued with the new tier's models, again if it already was; after, every later step uses them, and the ship message says the tier changed.
 
 ## 3. Design and the explainer
 
-Read [design.md](design.md) and do what it asks before choosing an approach. After its "Ground the change" and before its Proportion, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on, and its assumptions go with them, marked as yours. In a full run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
+Read [design.md](design.md) and do what it asks before choosing an approach. After its "Ground the change" and before its Proportion, run the `grill-me` skill on the request with what you've reproduced and found; its answers are part of the request from here on, and its assumptions go with them, marked as yours. In a medium or heavy run, have the approach argued in a back-and-forth (the `back-and-forth` skill), with design.md's proportion estimates in its Context as premises to check and a smaller version and no change among the options; in a light run, do so only when design.md's triggers fire or the strong approaches differ materially, and otherwise write the approach yourself. Give the runner, in the Context, your grounding with its references, what you reproduced and what you only read, and a path for its record in the session's scratchpad or temp folder; in the Question, which you write from the request, ask also for where the change lands, callers and sibling cases included, the acceptance cases, and what it leaves to you. When a design question is a fact you could observe by running something, settle it with a throwaway experiment in an isolated checkout or scratch data, not by asking the user; the experiment ships nothing.
 
 **The second look.** When the back-and-forth concludes, get a second look at its record (the `second-look` skill), with the request, and the reproduction's result and how to run it when there is one. Its report goes in the explainer, and a point it holds makes the explainer a choice.
 
@@ -70,19 +79,19 @@ Send the user the **explainer**, in plain language, under these headings, in ord
 
 Then stop: build nothing until the user approves. A plain approval in any wording lets you build; of a choice, it builds the recommended approach, and naming the other builds that one. Anything else goes word for word into the same back-and-forth as a further exchange, past its exchange limit, and comes back as a revised explainer; stop again. In a light run with no back-and-forth, revise the explainer yourself and stop again.
 
-The approval covers the explainer as written. When a test, a demo or a review changes what the user gets, its visible behaviour, compatibility, scope, the action you'll take to ship it, or a tradeoff the explainer accepted, quote the sentence it falsifies, work it out with the model, send a revised explainer that says what changed, and stop again. Smaller discoveries, such as using a different internal helper, go in the ship message's "what changed since".
+The approval covers the explainer as written. When a test, a demo or a review changes what the user gets, its visible behaviour, compatibility, scope, the action you'll take to ship it, or a tradeoff the explainer accepted, quote the sentence it falsifies, work it out with the other model, send a revised explainer that says what changed, and stop again. Smaller discoveries, such as using a different internal helper, go in the ship message's "what changed since".
 
 ## 4. Build and prove
 
 Before changing behaviour, keep the reproduction and every acceptance check that can run before the change exists: commit the ones the explainer ships, and save the rest, or all of them when nothing will be committed, as a patch outside the repo. Together they are the acceptance baseline, and all of it runs again on the final candidate: any later edit to it goes to the code loop and the ship message with its diff and whether it changes the promised behaviour.
 
-Build the approved approach, in the order design.md sets. When the change alters a flow the verify skill covers, update that flow in the same change. Show the reproduction from step 2 passing, through the verify skill and in the running product when the user can see it. Then simplify the diff as [simplify.md](simplify.md) says. Then run a code loop with the model on the full diff (the `code-loop` skill), giving it the user's request, or the brief that stands for it, as the Request, the explainer as the Approach, with the runner's record when there is one, the acceptance baseline as the Acceptance, and the tier.
+Build the approved approach, in the order design.md sets. When the change alters a flow the verify skill covers, update that flow in the same change. Show the reproduction from step 2 passing, through the verify skill and in the running product when the user can see it. Then simplify the diff as [simplify.md](simplify.md) says. Then run a code loop on the full diff (the `code-loop` skill), with the other model as reviewer and the breaker's default as breaker, giving it the user's request, or the brief that stands for it, as the Request, the explainer as the Approach, with the runner's record when there is one, the acceptance baseline as the Acceptance, and the tier.
 
 On the final candidate, when a user can see or do what changed, capture it through the verify flow, extending the flow with `make-verifiable` when it can't, and for a bug capture the same scenario on the base through the same flow, so the before and after match. Choose, make and review the capture as [capture.md](capture.md) says, and check it shows what you'll say it shows. A capture shows the change and the checks prove it, so a capture of the base or of a failed run never stands as a pass. A change with nothing to see gets no capture.
 
 ## 5. Write-up
 
-Draft the PR, issue or release text from the project's templates, with the captures where the template has room for them, or under a heading of their own. On GitHub, attach them when you publish with `gh pr create --attach` (or `gh pr edit`) unless the repo has its own tool; when it exits non-zero, look for the PR before retrying, since it may already exist. Before any public text that states a fact goes out (a description, a reply, a status update), a fresh reviewer of the model checks it against the evidence, the captures (a recording as its frames and pacing report) and the diff: every claim true and backed, every ticked box true. Cut a claim the evidence doesn't back; don't hedge it.
+Draft the PR, issue or release text from the project's templates, with the captures where the template has room for them, or under a heading of their own. On GitHub, attach them when you publish with `gh pr create --attach` (or `gh pr edit`) unless the repo has its own tool; when it exits non-zero, look for the PR before retrying, since it may already exist. Before any public text that states a fact goes out (a description, a reply, a status update), a fresh agent on the fact-check's default checks it against the evidence, the captures (a recording as its frames and pacing report) and the diff: every claim true and backed, every ticked box true. Cut a claim the evidence doesn't back; don't hedge it.
 
 Before every push, rerun the check behind each ticked box and each claim, and redo each capture, that the change since could affect.
 
