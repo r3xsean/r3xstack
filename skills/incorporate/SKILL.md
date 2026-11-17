@@ -11,7 +11,7 @@ When the source announces a model the user could run, run the `model-audit` skil
 
 ## 1. The source
 
-Read what the user gave: a post as given, with its images or the user's description of them; a video through the `transcribe-youtube` skill; an article, fetched. Read an X link yourself in a background T3 browser tab (`preview_open` with `open: false`; a visible tab's reads time out), read-only: the post, its thread and replies on that page, and its images, downloaded and viewed. Close the tab when done. Note the author, and the date and link where the source has them. Research the wider discussion, such as replies and quote posts on X, only when the user asks. When part of the source can't be read, ask for it; don't reconstruct it.
+Read what the user gave: a post as given, with its images or the user's description of them; a video through the `watch-video` skill; an article, fetched. Read an X link yourself in a background T3 browser tab (`preview_open` with `open: false`; a visible tab's reads time out), read-only: the post, its thread and replies on that page, and its images, downloaded and viewed. Close the tab when done. Note the author, and the date and link where the source has them. Research the wider discussion, such as replies and quote posts on X, only when the user asks. When part of the source can't be read, ask for it; don't reconstruct it.
 
 Write each idea as a behaviour, "given X, the agent does Y", kept apart from what you read into it.
 
