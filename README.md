@@ -18,6 +18,7 @@ My personal agent skills.
 | [`kaizen`](skills/kaizen/) | Use when the user says "kaizen". |
 | [`make-verifiable`](skills/make-verifiable/) | Use when the user asks to make a repo verifiable, or another skill needs a repo's verify skill created, extended or repaired. |
 | [`model-audit`](skills/model-audit/) | Use when the user says "audit the models" in a workflow, or another skill hands over a model launch. |
+| [`model-defaults`](skills/model-defaults/) | The model and effort each role runs on when the request names none. |
 | [`second-look`](skills/second-look/) | Use when the user asks to get a second look at something, or another skill asks for a second look. |
 | [`see-it-through`](skills/see-it-through/) | Use when the user says "see it through". |
 | [`watch-video`](skills/watch-video/) | Watch a video from a link (YouTube, X or any site yt-dlp handles) or a local file, for its transcript, details and what's on screen. Use when the user shares a video, asks what one says or shows, wants its transcript, or uses it as context, or when another skill needs to read a video. |

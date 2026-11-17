@@ -18,7 +18,7 @@ The user can change any of these by saying so, in their own words, when they sta
 | Stages | Probes and debates | "Skip probes"; "no debates", and you give the verdicts yourself |
 | Report | An HTML page, plus a short list in chat | "Chat only" |
 | Concurrency | 10 agents running at a time; at step 7, 5 launched runs at a time | "Run N at a time"; "N runs at a time" |
-| Models | Reviewers and the runs launched at step 7: the model and effort this thread runs on. Probes: Sol at high. Debates: the runner and the other model from the `see-it-through` skill's Defaults for a medium run. Close calls: its second look | Any role, with model and effort |
+| Models | Reviewers and the runs launched at step 7: the model and effort this thread runs on. Probes: Sol at high. Debates: the runner and the other model from [model-defaults](../model-defaults/SKILL.md). Close calls: the second look from the same file | Any role, with model and effort |
 
 Start every agent this skill names as a `delegate_task` with its model and effort set, never as a native subagent: native subagents stop at 20. Where a step says to start agents all at once, or step 7 says items launch at once, keep as many going as Concurrency allows and start the next as each one finishes.
 

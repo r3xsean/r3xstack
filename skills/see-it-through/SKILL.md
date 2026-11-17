@@ -7,18 +7,11 @@ Take a code change from the user's request to where it should end up, with anoth
 
 **Auto approve.** When the request says to auto approve, the ship message is the user's only approval. Answer the grill yourself with each recommended answer, and settle the same way anything else this skill would ask before the ship message. Approve each explainer yourself, revised ones included, by building its recommended approach, and still send it, marked auto-approved. The ship message then also lists each answer and choice you made in the user's place.
 
-The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name, in every tier; when they name neither, it is the default below for the run's tier. It argues every back-and-forth and reviews every code loop below; the breaker and the write-up's fact-check run on their own default. If they name only one of the two, ask for the other and do nothing else until they answer.
+The other model is the newest model, in `orchestrator_capabilities`, of the family the user names, at the effort they name, in every tier; when they name neither, it is the default for the run's tier. It argues every back-and-forth and reviews every code loop below; the breaker and the write-up's fact-check run on their own default. If they name only one of the two, ask for the other and do nothing else until they answer.
 
-A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default below for the run's tier. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
+A runner argues the approach in step 3 in your place (the `back-and-forth` skill's runner), against the other model, and a second look (the `second-look` skill) reads what they conclude. Each is the model the user names for it, and otherwise the default for the run's tier. When the runner's model is unavailable, say so and argue the approach yourself with the other model.
 
-**Defaults.** Each is the newest model of its family in `orchestrator_capabilities`.
-
-| Role | Light and medium | Heavy |
-|---|---|---|
-| The other model | Sol at high | Astra at high |
-| The runner | Opus at xhigh | Fable at high |
-| The breaker and the fact-check | Sol at high | Sol at high |
-| The second look | Fable at high | Fable at high |
+**Defaults.** Each role's default for the run's tier is in [model-defaults](../model-defaults/SKILL.md).
 
 ## 1. Destination and rules
 

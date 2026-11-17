@@ -5,7 +5,7 @@ description: Use when the user asks to get a second look at something, or anothe
 
 Have a fresh model read work that already exists and say how it would make it better, then settle each point it raises. The work is what the user or the calling skill points at: a proposal, a plan, a back-and-forth's record, a diff.
 
-The second look's model is the newest model, in `orchestrator_capabilities`, of the family the user or the calling skill names, at the effort they name; when they name neither, it is the one the `see-it-through` skill's **Defaults** give the second look. If they name only one of the two, ask for the other and do nothing else until they answer. When the model is unavailable, say so in the report and go on without a second look.
+The second look's model is the newest model, in `orchestrator_capabilities`, of the family the user or the calling skill names, at the effort they name; when they name neither, it is the second look's default in [model-defaults](../model-defaults/SKILL.md). If they name only one of the two, ask for the other and do nothing else until they answer. When the model is unavailable, say so in the report and go on without a second look.
 
 ## 1. Ask
 
