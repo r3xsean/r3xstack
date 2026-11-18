@@ -8,7 +8,7 @@ Each model is the newest of its family in `orchestrator_capabilities`, at the ef
 
 | Role | Light and medium | Heavy |
 |---|---|---|
-| The other model: debate partner and code-loop reviewer | Sol at high | Astra at high |
+| The other model: debate partner | Sol at high | Astra at high |
 | The runner: argues the approach | Opus at xhigh | Fable at high |
-| The breaker and the fact-check | Sol at high | Sol at high |
+| The reviewer, the breaker and the fact-check | Sol at high | Sol at high |
 | The second look | Fable at high | Fable at high |

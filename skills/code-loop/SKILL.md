@@ -7,7 +7,7 @@ Review a code change with another model in up to 3 rounds: a reviewer reads the 
 
 ## 1. Brief the reviewer and the breaker
 
-The reviewer and the breaker are the newest model, in `orchestrator_capabilities`, of the family the user named (`sol`, `opus`, …), at the effort they named; set no other model option. A provider alone (`gpt`, `claude`) names no family. If the family or effort is missing, ask for it and do nothing else until they answer. When the calling skill names a separate model for the breaker, the breaker runs on that one.
+The reviewer and the breaker are the newest model, in `orchestrator_capabilities`, of the family the user or the calling skill names (`sol`, `opus`, …), at the effort they name; set no other model option. A provider alone (`gpt`, `claude`) names no family. If the family or effort is missing, ask for it and do nothing else until they answer. Both roles run on the reviewer's family and effort unless the calling skill names a separate family and effort for the breaker.
 
 Pin the base: the one the caller passes, otherwise `git merge-base HEAD <remote>/<default-branch>`, where the remote is the one the change merges into (`upstream` on a fork), or `HEAD` when the change is uncommitted only. Run the checks that cover the change, through the repo's verify skill when it has one (`.agents/skills/verify/`), and fix any that fail before round 1. Record the revision they ran on, uncommitted changes included.
 
