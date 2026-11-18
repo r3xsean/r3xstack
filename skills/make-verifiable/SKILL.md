@@ -41,7 +41,7 @@ For each flow, write executable helpers that:
 - launch the product as close to how its users reach it as the environment allows, and wait until it is ready, reusing an existing harness where one exists; each gap from the real path, such as a fake transport in place of a live service, goes on the flow's not-verified line;
 - record what ran: the revision, uncommitted changes and, when a build runs, the build actually exercised;
 - drive the real path with throwaway data;
-- assert the visible outcome and the persisted effect;
+- assert the visible outcome and the persisted effect, pinning only what [tests.md](tests.md) allows;
 - save evidence to a path the helper prints;
 - when the outcome is something a user sees, save a screenshot or recording of it with the evidence, using the repo's own test tooling where it can capture, otherwise a simulator or browser recording; a helper that records follows [recording.md](recording.md);
 - clean up only what the run created.

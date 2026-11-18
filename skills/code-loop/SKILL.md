@@ -71,7 +71,7 @@ Grade each finding yourself by the reviewer brief's definitions, whatever label 
 - Nit: on code the diff adds, changes or moves, apply it when its fix deletes code, reuses what the repo or platform provides, or brings code in line with the Standards or the surrounding code, keeping every check passing and without trading clarity for length. Decline in one line a nit that adds a path, case, option or compatibility layer, one whose fix changes what the user sees or gets back, and one that is only taste.
 - Pre-existing or out of scope: decline in one line.
 
-Commit each test in the breaker's patch, or name the existing test that covers its condition.
+Commit each test in the breaker's patch that the `make-verifiable` skill's [tests.md](../make-verifiable/tests.md) would ship, or name the existing test that covers its condition; keep the rest as evidence and say why.
 
 Never agree just to end the loop. Re-run the checks and `git diff --shortstat <base>`; remove what the review added outside tests that no accepted finding needs, keeping the smallest correct fix even when it grows the code.
 

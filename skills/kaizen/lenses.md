@@ -31,6 +31,7 @@ One reviewer per family per slice.
 - What is no longer needed: dead code, flags fully rolled out, unused dependencies. Before calling anything unused, search for callers wired by string or config, and for external ones, such as a webhook only a payment provider calls. (Alex Albert, and replies to his post)
 - What is overcomplicated, or rests on weak assumptions: challenge them. (Anthony Riera)
 - The deletion test: would deleting this module concentrate complexity, or only move it? Shallow modules, whose interface is nearly as complex as their implementation. Abstractions and seams with one implementation and nothing that varies across them. (Matt Pocock, codebase-design; Anthropic, architecture-critic)
+- Tests that cost more than they guard: assertions that break when the code changes but the behaviour doesn't (source text, internals, incidental snapshots), tests that only show something was removed, tests that stay green with their behaviour broken, and duplicates across layers or components. Judge each by [tests.md](../make-verifiable/tests.md). (Maze, /prune-tests; Google, change-detector tests)
 
 ## Whole repo
 
@@ -39,7 +40,7 @@ One reviewer each, over the whole scope, since no slice can see these.
 - **Duplication and inconsistency.** The same logic in several places, copies that have drifted apart, several ways of doing one thing. Name the way the repo converged on most recently. (Alex Albert's "inconsistent"; shadcn/improve)
 - **Architecture.** Concepts you can only understand by bouncing between many small modules. Coupling that leaks across seams. Layering violations, god modules, and changes that always touch several files in lockstep. Start from the hotspots. (Matt Pocock, improve-codebase-architecture; shadcn/improve)
 - **Dependencies.** Major versions behind where staying costs something, deprecated APIs with removal dates, abandoned dependencies on critical paths, two libraries doing one job. Run audit commands read-only. (shadcn/improve)
-- **Tests and verification.** Critical paths with no tests, code that changes often and has no tests, tests that pass without the behaviour they claim, no one-command way to know the repo works. (shadcn/improve; the `make-verifiable` skill)
+- **Tests and verification.** Critical paths with no tests, code that changes often and has no tests, no one-command way to know the repo works. (shadcn/improve; the `make-verifiable` skill)
 - **Tooling and docs.** Missing or broken checks, slow feedback loops, setup docs that are wrong, decision docs the code has drifted from. (shadcn/improve)
 - **The repo's agent setup.** AGENTS.md or CLAUDE.md, skills, commands, hooks, settings and MCP config: gaps, and instructions that no longer hold. (陈成's list, #4)
 - **Direction.** Where the codebase wants to go next. Ground each suggestion in the repo: unfinished intent, things promised but not delivered, asymmetries such as an export with no import, and what the architecture makes unusually cheap. A suggestion that could apply to any project is noise. (shadcn/improve)

@@ -11,6 +11,7 @@ Ask "could this be simpler?" of every hunk of `git diff <base>`, and only of cod
 - Logic repeated within the diff, nesting an early return would flatten, a decision made in two places.
 - Comments that restate the code. Keep the ones that say why.
 - Tests in the diff that catch no regression you can name that another test or layer doesn't already catch. Delete whole tests, then any helper or fixture they leave unused.
+- Tests in the diff that the `make-verifiable` skill's [tests.md](../make-verifiable/tests.md) wouldn't ship: rewrite or delete them as it says.
 
 ## Never
 
