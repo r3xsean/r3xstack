@@ -646,8 +646,12 @@ def watch(args: argparse.Namespace, number: int | None, info: dict[str, Any], lo
         out = args.output.expanduser().resolve()
         if number:
             out = out.with_name(f"{out.stem}-{number}{out.suffix}")
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(text, encoding="utf-8")
+        try:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(text, encoding="utf-8")
+        except OSError as exc:
+            raise WatchError(f"could not write --output {out} ({exc.strerror or exc}); "
+                             f"the transcript is at {destination}") from exc
         destination = out
     keep = media if media and "video" in kinds and not args.transcript_only else None
     write_manifest(run, source=args.source, entry=number, length=length,

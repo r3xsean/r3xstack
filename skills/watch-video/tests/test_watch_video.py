@@ -128,6 +128,14 @@ class LocalFiles(unittest.TestCase):
             self.assertEqual(done.returncode, 2)
             self.assertEqual(self.silent.read_bytes(), before)
 
+    def test_output_to_a_folder_is_actionable(self):
+        folder = Path(self.tmp.name) / "existing-folder"
+        folder.mkdir(exist_ok=True)
+        done = run(str(self.silent), "--transcript-only", "-o", str(folder), env=self.env)
+        self.assertEqual(done.returncode, 2)
+        self.assertNotIn("Traceback", done.stderr)
+        self.assertIn("could not write --output", done.stderr)
+
     def test_transcript_only_has_no_frames(self):
         done = run(str(self.silent), "--transcript-only", env=self.env)
         self.assertEqual(done.returncode, 0, done.stderr)
