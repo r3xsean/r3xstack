@@ -33,7 +33,7 @@ Done when each idea has its uses, or none with what was searched.
 
 ## 4. Audit
 
-Read `~/.agents/sources/log.md`, when it exists, for the same source or idea; reuse its reasoning after rechecking it against any new evidence and the current files. Then read the skills, rules and project files the ideas and their uses touch, and mark each idea, splitting one whose parts earn different marks: covered (the file and line), gap, conflict (quote the rule), excluded on purpose, or unsupported or unsuited here (why). A capability is covered when something the user has already does that job. An idea with a use is marked unsuited only with why it can't serve that use.
+Read `~/.agents/sources/log.md`, when it exists, for the same source or idea: an entry is evidence for the marks, rechecked against any new evidence and the current files. It never stands in for a step, and one that names no machines searched looked for no uses. Then read the skills, rules and project files the ideas and their uses touch, and mark each idea, splitting one whose parts earn different marks: covered (the file and line), gap, conflict (quote the rule), excluded on purpose, or unsupported or unsuited here (why). A capability is covered when something the user has already does that job. An idea with a use is marked unsuited only with why it can't serve that use.
 
 Done when each idea has a mark backed by a file reference or a reason.
 
