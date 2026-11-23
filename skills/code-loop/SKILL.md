@@ -15,13 +15,13 @@ Start every round as a fresh `delegate_task`. Pushback and later rounds go in th
 
 When the diff changes only comments, docs or formatting, run no loop and say so in the final message. In round 1, start the reviewer and the breaker in parallel, the breaker with `isolation: "worktree"`. Skip the breaker when the diff changes no code that runs. In a light run (the tier `see-it-through` passes), start no breaker in round 1; once the reviewer replies, start one scoped to the conditions on its Not verified line that a test could settle, if any.
 
-Both briefs open with this header:
+Send each brief as written here, with its fields filled and, in later rounds, §3's changes. Both briefs open with this header:
 
 ```
 Repo: <abs path>  Base: <sha>  Out of scope: <scope>
 Standards: <the repo's rule files, such as AGENTS.md or CONTRIBUTING.md; or none>
 Setup: <what every shell must run first, such as a pinned-toolchain script, and what a fresh checkout needs, such as an install; or none>
-Checks: <results>  Running now: <checks still in progress; or none>
+Checks: <each check run: its command, verdict, the revision or build it ran on, uncommitted changes included, and where its evidence is; or none>  Running now: <checks still in progress; or none>
 Request: <the user's request or brief, word for word, or its absolute path>
 Approach: <the approved approach, or its absolute path; or none>. Its claims are the author's: check the ones the diff relies on.
 Acceptance: <the commit or patch holding the acceptance checks written before the change; or none>
@@ -52,11 +52,11 @@ Breaker brief, after the header:
 
 ```
 Break this change. Do not commit, push, comment, or start subagents.
-Work only in your own checkout, the working directory you started in, which is a copy of <repo>'s HEAD. First bring over the uncommitted part of the change: git -C <repo> diff HEAD | git apply, then copy the untracked files listed by git -C <repo> status --short. Never change files in <repo> or the user's config, and run nothing that pushes, posts, or notifies; package-manager caches are fine. Skip E2E runs and anything listed in Running now; compile only what your tests need.
+Work only in your own checkout, the working directory you started in, which is a copy of <repo>'s HEAD. First bring over the uncommitted part of the change: git -C <repo> diff HEAD | git apply, then copy the untracked files listed by git -C <repo> status --short. Never change files in <repo> or the user's config, and run nothing that pushes, posts, or notifies; package-manager caches are fine. Skip E2E runs and anything listed in Running now; compile only what your tests need. Don't rerun a check Checks lists as passing on the tree, uncommitted changes and build your checkout has; the guards you undo and the tests you write still run.
 Write the acceptance conditions as Conditions says. For each, write and run the smallest test that would fail if the condition broke, asserting on what the user sees or gets back.
 For each test below E2E that the change adds as proof, undo the guard it should catch, or break its precondition, run it, then restore the code.
 COULDN'T TEST is only for a condition this level can't reach, such as one that needs E2E. A slow queue or your own broken setup is not one: batch your tests into one job, wait for it without cancelling, and fix your setup.
-Before you reply, write a patch of your passing tests that cover a condition no existing test covers to <keep path>, and delete everything else you added.
+Before you reply, write a patch of your passing tests that cover a condition no existing test covers to <keep path>, stop any process you started, and release anything shared you reserved; leave the rest of your checkout as it is.
 Reply, one line per condition: B1 HELD <condition> — <command>; B2 BROKE <condition> — <command> and the failing output; or B3 COULDN'T TEST <condition> — why. Then one line per proof test: P1 FAILS <test> with <guard> undone; or P2 STILL PASSES <test> with <guard> undone. Then: Kept: <keep path> and the condition each test covers; or none.
 ```
 
