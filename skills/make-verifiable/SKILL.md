@@ -27,11 +27,11 @@ Read the repo's AGENTS.md, package scripts, task runners, git hooks, CI workflow
 
 ## 2. Checks
 
-List one command per check kind (lint, types, build, tests, and so on), pointing at the commands that already exist. Add a wrapper only when several must run together; it prints what it ran and exits non-zero when any of them fails. Narrow checks to the changed area only by the repo's own selection rules; when what a change can affect is unclear, run the full set.
+List one command per check kind (lint, types, build, tests, and so on), pointing at the commands that already exist. Add a wrapper only when several must run together; it prints what it ran and exits non-zero when any of them fails. For tests, and any other check that takes over a minute whole, also give a narrowed command and the rule that picks what it runs from the changed files: a map from source to test files, or the runner's own selection, such as Vitest's `--changed`. When the rule can't settle what a change reaches, the narrowed run is the full set.
 
 When the request or a lessons follow-up names state that several operations change across awaits (user actions, replies, events), add an **ordering check**. It drives the real code, replaces only the outside boundary (IPC, network, timers) with a model of the order that boundary can deliver its replies and events in, runs every order up to a stated bound, and asserts the properties after each step. Write the properties from the intended behaviour, not from the code under test, cite each ordering rule in the boundary model to the code or doc it comes from (`file:line` at a named revision), so a change there tells the next agent to recheck the model, and allow every order those sources don't rule out. It reports the bound, the orders run, and whether the search was exhaustive within the bound. A failing order counts as a bug only once a plain test on the real code reproduces it.
 
-Done when each command has run on the current tree to a result, each wrapper has been seen to exit non-zero on a failing input, and each ordering check has been seen to fail on a defect planted in each guard it covers, then pass once restored. A command the environment stops from running is a blocker to report, not a result.
+Done when each command has run on the current tree to a result, each narrowed command has picked, for a sample change, the tests its rule names, each wrapper has been seen to exit non-zero on a failing input, and each ordering check has been seen to fail on a defect planted in each guard it covers, then pass once restored. A command the environment stops from running is a blocker to report, not a result.
 
 ## 3. Flows
 
@@ -58,6 +58,6 @@ When a verify step fails, first decide which it is: the environment, the verify 
 
 ## 5. Write the verify skill
 
-`SKILL.md` with the description `Use when checking or proving a change in <repo>.` and a body holding only: the check commands; per flow, its command, what it asserts, its prerequisites, its evidence path and, when it captures, how to ask for the capture and where it goes; and the report contract: PASS, FAIL or INCOMPLETE per check and flow, with what ran and what wasn't verified, and per capturing flow the capture's path, "none required", or INCOMPLETE with the reason. Mechanics live in the helpers, not the prose.
+`SKILL.md` with the description `Use when checking or proving a change in <repo>.` and a body holding only: the check commands, each narrowed command with its rule, and when each runs: the narrowed command while iterating, the full set once on the final candidate, and after that only what a later change can affect; per flow, its command, what it asserts, its prerequisites, its evidence path and, when it captures, how to ask for the capture and where it goes; and the report contract: PASS, FAIL or INCOMPLETE per check and flow, with what ran and what wasn't verified, and per capturing flow the capture's path, "none required", or INCOMPLETE with the reason. Mechanics live in the helpers, not the prose.
 
 Commit only as the calling skill or the user says. Report what you added or changed, the failures you saw each new assertion and wrapper catch, and what is still INCOMPLETE.

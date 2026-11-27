@@ -73,7 +73,7 @@ Grade each finding yourself by the reviewer brief's definitions, whatever label 
 
 Commit each test in the breaker's patch that the `make-verifiable` skill's [tests.md](../make-verifiable/tests.md) would ship, or name the existing test that covers its condition; keep the rest as evidence and say why.
 
-Never agree just to end the loop. Re-run the checks and `git diff --shortstat <base>`; remove what the review added outside tests that no accepted finding needs, keeping the smallest correct fix even when it grows the code.
+Never agree just to end the loop. Re-run the checks the fixes touch and `git diff --shortstat <base>`; remove what the review added outside tests that no accepted finding needs, keeping the smallest correct fix even when it grows the code.
 
 ## 3. Next round
 

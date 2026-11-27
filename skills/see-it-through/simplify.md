@@ -22,4 +22,4 @@ Ask "could this be simpler?" of every hunk of `git diff <base>`, and only of cod
 
 ## Done
 
-Rerun the checks; revert a simplification that makes one fail, rather than editing a test. Done when every hunk has been asked, every simplification found is made or kept for a reason under "Never" (its size is no reason), the checks pass, and you've noted for the ship message each test you deleted, by name.
+Rerun the checks the simplifications touch; revert a simplification that makes one fail, rather than editing a test. Done when every hunk has been asked, every simplification found is made or kept for a reason under "Never" (its size is no reason), the checks pass, and you've noted for the ship message each test you deleted, by name.
